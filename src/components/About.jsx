@@ -1,10 +1,6 @@
+import { useRef } from 'react';
 import { motion } from 'framer-motion';
 import './About.css';
-
-const fadeUp = (delay = 0) => ({
-  hidden: { opacity: 0, y: 24 },
-  show: { opacity: 1, y: 0, transition: { delay, duration: 0.6, ease: [0.76, 0, 0.24, 1] } },
-});
 
 /* ─── Skill icon components (inline SVG) ─── */
 const SkillIcon = ({ name }) => {
@@ -176,24 +172,6 @@ const SkillIcon = ({ name }) => {
         <rect x="20" y="9" width="4" height="15" rx="1" fill="#FF9F43" opacity="0.5"/>
       </svg>
     ),
-    FAISS: (
-      <svg viewBox="0 0 32 32" fill="none" width="20" height="20">
-        <circle cx="16" cy="16" r="15" fill="#4FA8FF" opacity="0.15"/>
-        <circle cx="16" cy="16" r="5" fill="none" stroke="#4FA8FF" strokeWidth="1.3"/>
-        <circle cx="10" cy="10" r="2" fill="#4FA8FF" opacity="0.6"/>
-        <circle cx="22" cy="10" r="2" fill="#4FA8FF" opacity="0.6"/>
-        <circle cx="22" cy="22" r="2" fill="#4FA8FF" opacity="0.6"/>
-        <circle cx="10" cy="22" r="2" fill="#4FA8FF" opacity="0.6"/>
-        <path d="M10 10l4.5 4.5M22 10l-4.5 4.5M22 22l-4.5-4.5M10 22l4.5-4.5" stroke="#4FA8FF" strokeWidth="0.8" opacity="0.4"/>
-      </svg>
-    ),
-    Supabase: (
-      <svg viewBox="0 0 32 32" fill="none" width="20" height="20">
-        <circle cx="16" cy="16" r="15" fill="#3ECF8E" opacity="0.15"/>
-        <path d="M10 22L16 8l6 14H10z" fill="#3ECF8E" opacity="0.7"/>
-        <path d="M22 10L16 24l-6-14h12z" fill="#3ECF8E" opacity="0.4"/>
-      </svg>
-    ),
     TypeScript: (
       <svg viewBox="0 0 32 32" fill="none" width="20" height="20">
         <rect x="1" y="1" width="30" height="30" rx="4" fill="#3178C6" opacity="0.15"/>
@@ -205,7 +183,6 @@ const SkillIcon = ({ name }) => {
   const icon = icons[name];
   if (icon) return icon;
 
-  // Fallback: colored circle with first letter
   const colors = ['#4FA8FF','#FF9F43','#A8E6A3','#C8A8FF','#FF6B9D','#FFD93D'];
   const color = colors[name.charCodeAt(0) % colors.length];
   return (
@@ -229,125 +206,307 @@ const EDU = [
     school: 'University of Auckland',
     degree: 'Master of Engineering (Robotics & AI)',
     period: 'Mar 2026 – Nov 2026',
-    note: null,
   },
   {
     school: 'National University of Singapore',
     degree: 'Exchange – Computer Science',
     period: 'Jul 2024 – Dec 2024',
-    note: null,
   },
   {
     school: 'University of Auckland',
     degree: 'BE(Hons) Software Engineering',
     period: 'Mar 2022 – Nov 2025',
-    note: "Dean's Honour's List 2022, 2023 · GPA: 92%",
+    note: "Dean's List 2022, 2023 · GPA 92%",
   },
 ];
 
+const fadeIn = (delay = 0) => ({
+  hidden: { opacity: 0, y: 16 },
+  show: { opacity: 1, y: 0, transition: { delay, duration: 0.55, ease: [0.76, 0, 0.24, 1] } },
+});
+
 export default function About() {
+  const canvasRef = useRef(null);
+
   return (
-    <div className="about-page section-page">
-      <div className="about-inner">
-        {/* Left column */}
-        <motion.div
-          className="about-left"
-          initial="hidden"
-          animate="show"
-          variants={{ show: { transition: { staggerChildren: 0.1 } } }}
-        >
-          <motion.div variants={fadeUp(0)}>
-            <div className="section-label">FILE_01 // ABOUT ME</div>
-            <h2 className="section-title">Who I Am.</h2>
-          </motion.div>
+    <div className="about-canvas" ref={canvasRef}>
+      {/* Background grid */}
+      <div className="ac-grid-bg" />
 
-          <motion.div variants={fadeUp(0.1)} className="about-bio card">
-            <div className="avatar-placeholder">
-              <span>JH</span>
-            </div>
-            <div className="bio-text">
-              <p>
-                I'm <strong>Junhu Song</strong>, a Software Engineering student at the University of Auckland
-                with a passion for <span className="blue-highlight">machine learning</span>, robotics, and building
-                meaningful digital experiences.
-              </p>
-              <p>
-                Currently a <strong>Research Assistant</strong> at the CARES Robotics Lab, where I develop
-                emotion-understanding companion robots and multi-robot communication systems.
-              </p>
-              <p>
-                I'm about to begin my <strong>Master of Engineering in Robotics & AI</strong> in 2026,
-                continuing to push boundaries in human-robot interaction.
-              </p>
-            </div>
-          </motion.div>
+      {/*
+        SVG connector layer — angled bracket-style connectors like the reference:
+        each line goes from a node corner toward the center, with a sharp elbow
+        (two segments: horizontal then diagonal, or diagonal direct).
+        Arrowheads on the center end.
+      */}
+      <svg className="ac-connectors" viewBox="0 0 1000 700" preserveAspectRatio="none">
+        <defs>
+          <marker id="arr" markerWidth="7" markerHeight="7" refX="4" refY="3.5" orient="auto">
+            <path d="M0,0 L0,7 L7,3.5 z" fill="rgba(13,14,16,0.35)" />
+          </marker>
+        </defs>
 
-          <motion.div variants={fadeUp(0.2)} className="about-contact card">
-            <div className="contact-row">
-              <span className="mono-tiny blue">EMAIL</span>
-              <span>jaysong.0130@gmail.com</span>
-            </div>
-            <div className="contact-row">
-              <span className="mono-tiny blue">PHONE</span>
-              <span>021-152-0262</span>
-            </div>
-            <div className="contact-row">
-              <span className="mono-tiny blue">GITHUB</span>
-              <a href="https://github.com/json0130" target="_blank" rel="noreferrer">github.com/json0130</a>
-            </div>
-            <div className="contact-row">
-              <span className="mono-tiny blue">LINKEDIN</span>
-              <a href="https://linkedin.com/in/junhu-song-762682257" target="_blank" rel="noreferrer">linkedin.com/junhu-song</a>
-            </div>
-          </motion.div>
-        </motion.div>
+        {/* Name (top-left) → Center: two-segment elbow — right then down-right */}
+        <polyline
+          points="200,110 280,110 310,270"
+          fill="none"
+          stroke="rgba(13,14,16,0.15)"
+          strokeWidth="1"
+          markerEnd="url(#arr)"
+        />
 
-        {/* Right column */}
-        <motion.div
-          className="about-right"
-          initial="hidden"
-          animate="show"
-          variants={{ show: { transition: { staggerChildren: 0.1 } } }}
-        >
-          {/* Education */}
-          <motion.div variants={fadeUp(0.15)} className="about-section">
-            <div className="section-label">EDUCATION</div>
-            <div className="edu-list">
-              {EDU.map((e, i) => (
-                <div className="edu-item card" key={i}>
-                  <div className="edu-header">
-                    <div>
-                      <div className="edu-school">{e.school}</div>
-                      <div className="edu-degree">{e.degree}</div>
-                    </div>
-                    <div className="edu-period mono-tiny">{e.period}</div>
-                  </div>
-                  {e.note && <div className="edu-note tag">{e.note}</div>}
+        {/* Stats (mid-top) → Center: diagonal down-left */}
+        <polyline
+          points="440,145 440,200 380,270"
+          fill="none"
+          stroke="rgba(13,14,16,0.15)"
+          strokeWidth="1"
+          markerEnd="url(#arr)"
+        />
+
+        {/* Education (top-right) → Center: left then down-left */}
+        <polyline
+          points="690,120 560,120 530,270"
+          fill="none"
+          stroke="rgba(13,14,16,0.15)"
+          strokeWidth="1"
+          markerEnd="url(#arr)"
+        />
+
+        {/* Contact (bottom-left) → Center: right then up-right */}
+        <polyline
+          points="170,490 280,490 300,420"
+          fill="none"
+          stroke="rgba(13,14,16,0.15)"
+          strokeWidth="1"
+          markerEnd="url(#arr)"
+        />
+
+        {/* Skills (bottom-right) → Center: left then up-left */}
+        <polyline
+          points="640,460 540,460 530,410"
+          fill="none"
+          stroke="rgba(13,14,16,0.15)"
+          strokeWidth="1"
+          markerEnd="url(#arr)"
+        />
+
+        {/* Small dot at each node origin */}
+        <circle cx="200" cy="110" r="3" fill="rgba(13,14,16,0.2)"/>
+        <circle cx="440" cy="145" r="3" fill="rgba(13,14,16,0.2)"/>
+        <circle cx="690" cy="120" r="3" fill="rgba(13,14,16,0.2)"/>
+        <circle cx="170" cy="490" r="3" fill="rgba(13,14,16,0.2)"/>
+        <circle cx="640" cy="460" r="3" fill="rgba(13,14,16,0.2)"/>
+      </svg>
+
+      {/* ── CENTER FOCAL: WHO AM I ── */}
+      <motion.div
+        className="ac-node ac-center"
+        variants={fadeIn(0)}
+        initial="hidden"
+        animate="show"
+      >
+        <div className="ac-center-inner">
+          <span className="ac-file-label">FILE_01 //</span>
+          <h1 className="ac-graffiti">WHO AM I</h1>
+          <div className="ac-center-dot-row">
+            <span className="ac-dot" /><span className="ac-dot" /><span className="ac-dot" />
+          </div>
+        </div>
+      </motion.div>
+
+      {/* ── TOP-LEFT: Name + Role ── */}
+      <motion.div
+        className="ac-node ac-name"
+        variants={fadeIn(0.1)}
+        initial="hidden"
+        animate="show"
+      >
+        <div className="ac-bracket-label">[ IDENTITY ]</div>
+        <div className="ac-name-big">JUNHU<br />SONG</div>
+        <div className="ac-role-line">Software Engineer · ML & AI</div>
+        <div className="ac-role-line ac-muted">Research Assistant · UoA</div>
+        <div className="ac-chevrons">&gt;&gt;&gt;</div>
+      </motion.div>
+
+      {/* ── MID-TOP: Stats cluster ── */}
+      <motion.div
+        className="ac-node ac-stats"
+        variants={fadeIn(0.15)}
+        initial="hidden"
+        animate="show"
+      >
+        <div className="ac-stat-row">
+          <div className="ac-stat-item">
+            <span className="ac-stat-val">&lt;92%&gt;</span>
+            <span className="ac-stat-lbl">GPA</span>
+          </div>
+          <div className="ac-stat-item">
+            <span className="ac-stat-val">&lt;5+&gt;</span>
+            <span className="ac-stat-lbl">Scholarships</span>
+          </div>
+          <div className="ac-stat-item">
+            <span className="ac-stat-val">&lt;3+&gt;</span>
+            <span className="ac-stat-lbl">Yrs Research</span>
+          </div>
+        </div>
+        <div className="ac-stat-sub">Quality that withstands time and effort.</div>
+      </motion.div>
+
+      {/* ── TOP-RIGHT: Education ── */}
+      <motion.div
+        className="ac-node ac-edu"
+        variants={fadeIn(0.2)}
+        initial="hidden"
+        animate="show"
+      >
+        <div className="ac-bracket-label">[ EDUCATION ]</div>
+        {EDU.map((e, i) => (
+          <div className="ac-edu-item" key={i}>
+            <div className="ac-edu-school">{e.school}</div>
+            <div className="ac-edu-degree">{e.degree}</div>
+            <div className="ac-edu-period">{e.period}</div>
+            {e.note && <div className="ac-edu-note">{e.note}</div>}
+            {i < EDU.length - 1 && <div className="ac-edu-divider" />}
+          </div>
+        ))}
+      </motion.div>
+
+      {/* ── BOTTOM-LEFT: Contact ── */}
+      <motion.div
+        className="ac-node ac-contact"
+        variants={fadeIn(0.25)}
+        initial="hidden"
+        animate="show"
+      >
+        <div className="ac-bracket-label">[ CONTACT ]</div>
+        <div className="ac-contact-list">
+          <div className="ac-contact-row">
+            <span className="ac-contact-key">EMAIL</span>
+            <span className="ac-contact-sep">•</span>
+            <a href="mailto:jaysong.0130@gmail.com" className="ac-contact-val">jaysong.0130@gmail.com</a>
+          </div>
+          <div className="ac-contact-row">
+            <span className="ac-contact-key">PHONE</span>
+            <span className="ac-contact-sep">•</span>
+            <span className="ac-contact-val">021-152-0262</span>
+          </div>
+          <div className="ac-contact-row">
+            <span className="ac-contact-key">GITHUB</span>
+            <span className="ac-contact-sep">•</span>
+            <a href="https://github.com/json0130" target="_blank" rel="noreferrer" className="ac-contact-val ac-link">github.com/json0130</a>
+          </div>
+          <div className="ac-contact-row">
+            <span className="ac-contact-key">LINKEDIN</span>
+            <span className="ac-contact-sep">•</span>
+            <a href="https://linkedin.com/in/junhu-song-762682257" target="_blank" rel="noreferrer" className="ac-contact-val ac-link">linkedin.com/junhu-song</a>
+          </div>
+        </div>
+        <div className="ac-crosshair">
+          <span className="ac-ch-h" /><span className="ac-ch-v" />
+        </div>
+      </motion.div>
+
+      {/* ── BOTTOM-RIGHT: Skills ── */}
+      <motion.div
+        className="ac-node ac-skills"
+        variants={fadeIn(0.3)}
+        initial="hidden"
+        animate="show"
+      >
+        <div className="ac-bracket-label">[ SKILLS ]</div>
+        {Object.entries(SKILLS).map(([cat, skills]) => (
+          <div className="ac-skill-group" key={cat}>
+            <div className="ac-skill-cat">{cat}</div>
+            <div className="ac-skill-chips">
+              {skills.map(s => (
+                <div className="ac-skill-chip" key={s} title={s}>
+                  <SkillIcon name={s} />
+                  <span className="ac-chip-label">{s}</span>
                 </div>
               ))}
             </div>
-          </motion.div>
+          </div>
+        ))}
+      </motion.div>
 
-          {/* Skills with icons */}
-          <motion.div variants={fadeUp(0.25)} className="about-section">
-            <div className="section-label">SKILLS</div>
-            <div className="skills-grid">
-              {Object.entries(SKILLS).map(([cat, skills]) => (
-                <div className="skill-group card" key={cat}>
-                  <div className="skill-cat">{cat}</div>
-                  <div className="skill-icons-row">
-                    {skills.map(s => (
-                      <div className="skill-icon-chip" key={s} title={s}>
-                        <SkillIcon name={s} />
-                        <span className="skill-icon-label">{s}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
+      {/* ── Decorative scattered elements ── */}
+      <div className="ac-deco ac-deco-1">•</div>
+      <div className="ac-deco ac-deco-2">[ ]</div>
+      <div className="ac-deco ac-deco-3">&gt;&gt;&gt; &lt;&lt;&lt;</div>
+      <div className="ac-deco ac-deco-4">•</div>
+      <div className="ac-deco ac-deco-5">// 01</div>
+      <div className="ac-deco ac-deco-6">[ ]</div>
+      <div className="ac-deco-barcode">
+        {Array.from({ length: 18 }).map((_, i) => (
+          <div key={i} className={`ac-bar ${i % 3 === 0 ? 'ac-bar-wide' : i % 5 === 0 ? 'ac-bar-thin' : ''}`} />
+        ))}
+      </div>
+
+      {/* Mobile fallback */}
+      <div className="ac-mobile-fallback">
+        <div className="section-label">FILE_01 // ABOUT ME</div>
+        <h2 className="ac-graffiti-mobile">WHO AM I</h2>
+        <div className="ac-mb-section">
+          <div className="ac-bracket-label">[ IDENTITY ]</div>
+          <div className="ac-mb-name">JUNHU SONG</div>
+          <p className="ac-mb-body">Software Engineer · ML & AI · Research Assistant at UoA</p>
+        </div>
+        <div className="ac-mb-section">
+          <div className="ac-bracket-label">[ STATS ]</div>
+          <div className="ac-stat-row">
+            {[['92%','GPA'],['5+','Scholarships'],['3+','Yrs Research']].map(([v,l]) => (
+              <div className="ac-stat-item" key={l}>
+                <span className="ac-stat-val">&lt;{v}&gt;</span>
+                <span className="ac-stat-lbl">{l}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="ac-mb-section">
+          <div className="ac-bracket-label">[ EDUCATION ]</div>
+          {EDU.map((e, i) => (
+            <div className="ac-edu-item" key={i}>
+              <div className="ac-edu-school">{e.school}</div>
+              <div className="ac-edu-degree">{e.degree}</div>
+              <div className="ac-edu-period">{e.period}</div>
+              {e.note && <div className="ac-edu-note">{e.note}</div>}
+              {i < EDU.length - 1 && <div className="ac-edu-divider" />}
             </div>
-          </motion.div>
-        </motion.div>
+          ))}
+        </div>
+        <div className="ac-mb-section">
+          <div className="ac-bracket-label">[ CONTACT ]</div>
+          <div className="ac-contact-list">
+            {[
+              ['EMAIL','jaysong.0130@gmail.com','mailto:jaysong.0130@gmail.com'],
+              ['GITHUB','github.com/json0130','https://github.com/json0130'],
+              ['LINKEDIN','linkedin.com/junhu-song','https://linkedin.com/in/junhu-song-762682257'],
+            ].map(([k,v,href]) => (
+              <div className="ac-contact-row" key={k}>
+                <span className="ac-contact-key">{k}</span>
+                <span className="ac-contact-sep">•</span>
+                <a href={href} target="_blank" rel="noreferrer" className="ac-contact-val ac-link">{v}</a>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="ac-mb-section">
+          <div className="ac-bracket-label">[ SKILLS ]</div>
+          {Object.entries(SKILLS).map(([cat, skills]) => (
+            <div className="ac-skill-group" key={cat}>
+              <div className="ac-skill-cat">{cat}</div>
+              <div className="ac-skill-chips">
+                {skills.map(s => (
+                  <div className="ac-skill-chip" key={s} title={s}>
+                    <SkillIcon name={s} />
+                    <span className="ac-chip-label">{s}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
