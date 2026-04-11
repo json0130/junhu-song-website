@@ -147,14 +147,30 @@
   text-transform: uppercase;
 }
 
-/* Right side — Playlist panel */
+/* Right side — cards + playlist + LED */
 .home-right {
-  flex: 0 0 340px;
+  flex: 0 0 560px;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 32px;
+  align-items: flex-start;
+  gap: 20px;
   margin-right: 60px;
+}
+
+/* Top row: card stack + playlist side by side */
+.home-right-top {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 20px;
+  width: 100%;
+}
+
+/* LED strips row below */
+.home-led-row {
+  width: 100%;
+  padding: 4px 0 0;
+  border-top: 1px solid var(--border);
 }
 
 .home-card-stack {
