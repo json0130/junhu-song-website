@@ -2,15 +2,27 @@ import { useEffect, useRef, useState } from 'react';
 import './MusicLED.css';
 
 /**
- * MusicLED — a narrow vertical LED strip that reacts to audio in real time.
+ * MusicLED — a panel of vertical LED strips that react to audio in real time.
+ * Each strip represents a frequency band (sub-bass, bass, low-mid, mid, high-mid, treble).
  * Pass an AnalyserNode via `analyser` prop when audio is playing.
- * Falls back to a slow idle hue-cycle animation when no audio is active.
+ * Falls back to a slow idle rainbow animation when no audio is active.
  */
+
+// Each strip covers a frequency range and has a base hue
+const BANDS = [
+  { label: 'SUB',  freqMax: 60,   baseHue: 0   },   // deep red
+  { label: 'BASS', freqMax: 200,  baseHue: 20  },   // orange
+  { label: 'LMD',  freqMax: 600,  baseHue: 55  },   // yellow
+  { label: 'MID',  freqMax: 2000, baseHue: 110 },   // green
+  { label: 'HMD',  freqMax: 6000, baseHue: 200 },   // cyan-blue
+  { label: 'TRB',  freqMax: 20000,baseHue: 260 },   // purple
+];
+
 export default function MusicLED({ analyser }) {
   const rafRef = useRef(null);
-  const [hue, setHue] = useState(210);
-  const [sat, setSat] = useState(70);
-  const [lit, setLit] = useState(55);
+  const [strips, setStrips] = useState(
+    BANDS.map((b) => ({ hue: b.baseHue, sat: 60, lit: 45, energy: 0 }))
+  );
   const [active, setActive] = useState(false);
 
   useEffect(() => {
@@ -22,46 +34,32 @@ export default function MusicLED({ analyser }) {
     setActive(true);
     const bufferLength = analyser.frequencyBinCount;
     const dataArray = new Uint8Array(bufferLength);
-    const sampleRate = analyser.context.sampleRate;
+    const nyquist = analyser.context.sampleRate / 2;
+
+    const freqToIndex = (hz) => Math.floor((hz / nyquist) * bufferLength);
+
+    const avg = (arr, start, end) => {
+      let s = 0;
+      const len = Math.max(1, end - start);
+      for (let i = start; i < end; i++) s += arr[i];
+      return s / len;
+    };
 
     const tick = () => {
       analyser.getByteFrequencyData(dataArray);
 
-      // Split into bands: bass / mid / treble
-      const bassEnd   = Math.floor((200  / (sampleRate / 2)) * bufferLength);
-      const midEnd    = Math.floor((2000 / (sampleRate / 2)) * bufferLength);
+      let prevIdx = 0;
+      const next = BANDS.map((band) => {
+        const endIdx = Math.min(bufferLength, freqToIndex(band.freqMax));
+        const energy = avg(dataArray, prevIdx, endIdx) / 255;
+        prevIdx = endIdx;
 
-      const avg = (arr, start, end) => {
-        let s = 0;
-        for (let i = start; i < end; i++) s += arr[i];
-        return s / (end - start);
-      };
+        const sat = Math.round(30 + energy * 70);
+        const lit = Math.round(20 + energy * 50);
+        return { hue: band.baseHue, sat, lit, energy };
+      });
 
-      const bass   = avg(dataArray, 0,       bassEnd);
-      const mid    = avg(dataArray, bassEnd,  midEnd);
-      const treble = avg(dataArray, midEnd,   bufferLength);
-
-      // Find dominant band → hue
-      let targetHue;
-      if (bass >= mid && bass >= treble)        targetHue = 10;   // red-orange
-      else if (mid >= bass && mid >= treble)    targetHue = 100;  // green
-      else                                       targetHue = 220;  // blue-purple
-
-      // Blend toward treble/mid mix
-      const blendedHue = Math.round(
-        targetHue * 0.7 +
-        (treble > mid ? 240 : 80) * 0.3
-      );
-
-      // Overall energy → saturation + lightness
-      const energy = (bass + mid + treble) / 3;
-      const targetSat = Math.min(100, 40 + (energy / 255) * 60);
-      const targetLit = Math.min(70, 30 + (energy / 255) * 40);
-
-      setHue(blendedHue);
-      setSat(Math.round(targetSat));
-      setLit(Math.round(targetLit));
-
+      setStrips(next);
       rafRef.current = requestAnimationFrame(tick);
     };
 
@@ -69,18 +67,30 @@ export default function MusicLED({ analyser }) {
     return () => cancelAnimationFrame(rafRef.current);
   }, [analyser]);
 
-  const style = active
-    ? {
-        background: `hsl(${hue}, ${sat}%, ${lit}%)`,
-        boxShadow: `0 0 18px 5px hsla(${hue}, ${sat}%, ${lit}%, 0.5)`,
-      }
-    : {};
-
   return (
-    <div
-      className={`music-led ${active ? 'music-led--active' : 'music-led--idle'}`}
-      style={style}
-      title="Music reactive LED"
-    />
+    <div className={`music-led-panel ${active ? 'music-led-panel--active' : 'music-led-panel--idle'}`}>
+      <div className="mlp-label">LED</div>
+      <div className="mlp-strips">
+        {strips.map((s, i) => {
+          const style = active
+            ? {
+                background: `hsl(${s.hue}, ${s.sat}%, ${s.lit}%)`,
+                boxShadow: `0 0 10px 3px hsla(${s.hue}, ${s.sat}%, ${s.lit}%, ${0.3 + s.energy * 0.5})`,
+                height: `${40 + s.energy * 60}%`,
+              }
+            : {};
+
+          return (
+            <div key={i} className="mlp-strip-wrapper">
+              <div
+                className={`mlp-strip ${active ? 'mlp-strip--active' : ''}`}
+                style={{ ...style, '--idle-hue': `${BANDS[i].baseHue}` }}
+              />
+              <span className="mlp-band-label">{BANDS[i].label}</span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 }
