@@ -1,0 +1,95 @@
+/* ─── Music LED Multi-Strip Panel ─── */
+
+.music-led-panel {
+  position: fixed;
+  right: 58px;        /* just left of folder nav spine (52px wide) */
+  top: 15%;
+  height: 70vh;
+  width: 52px;        /* panel wide enough for 6 strips + gaps */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  z-index: 50;
+  pointer-events: none;
+}
+
+/* Small "LED" label above the panel */
+.mlp-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 7px;
+  letter-spacing: 0.25em;
+  color: rgba(0,0,0,0.25);
+  margin-bottom: 2px;
+  text-transform: uppercase;
+}
+
+/* Strips row */
+.mlp-strips {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;   /* strips grow upward from bottom */
+  gap: 4px;
+  height: calc(100% - 20px);
+  width: 100%;
+  justify-content: center;
+}
+
+/* Each strip wrapper anchors the strip to the bottom */
+.mlp-strip-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  height: 100%;
+  gap: 3px;
+}
+
+/* The actual glowing bar */
+.mlp-strip {
+  width: 6px;
+  border-radius: 4px 4px 2px 2px;
+  transition: height 0.07s ease, background 0.07s ease, box-shadow 0.07s ease;
+}
+
+/* Idle: each strip has its own hue from the CSS variable, slow pulse */
+.mlp-strip:not(.mlp-strip--active) {
+  height: 30%;
+  animation: strip-idle calc(6s + var(--idle-offset, 0s)) ease-in-out infinite alternate;
+}
+
+/* Stagger the idle animation per strip using nth-child */
+.mlp-strip-wrapper:nth-child(1) .mlp-strip { --idle-offset: 0s;    animation-duration: 5.5s; background: hsl(0,   55%, 52%); box-shadow: 0 0 8px 2px hsla(0,   55%, 52%, 0.4); }
+.mlp-strip-wrapper:nth-child(2) .mlp-strip { --idle-offset: 0.8s;  animation-duration: 6.2s; background: hsl(20,  60%, 52%); box-shadow: 0 0 8px 2px hsla(20,  60%, 52%, 0.4); }
+.mlp-strip-wrapper:nth-child(3) .mlp-strip { --idle-offset: 1.5s;  animation-duration: 5.8s; background: hsl(55,  65%, 50%); box-shadow: 0 0 8px 2px hsla(55,  65%, 50%, 0.4); }
+.mlp-strip-wrapper:nth-child(4) .mlp-strip { --idle-offset: 0.4s;  animation-duration: 6.5s; background: hsl(110, 55%, 48%); box-shadow: 0 0 8px 2px hsla(110, 55%, 48%, 0.4); }
+.mlp-strip-wrapper:nth-child(5) .mlp-strip { --idle-offset: 1.2s;  animation-duration: 5.3s; background: hsl(200, 65%, 52%); box-shadow: 0 0 8px 2px hsla(200, 65%, 52%, 0.4); }
+.mlp-strip-wrapper:nth-child(6) .mlp-strip { --idle-offset: 2.0s;  animation-duration: 6.8s; background: hsl(260, 60%, 55%); box-shadow: 0 0 8px 2px hsla(260, 60%, 55%, 0.4); }
+
+@keyframes strip-idle {
+  0%   { height: 18%; opacity: 0.6; }
+  50%  { height: 45%; opacity: 1;   }
+  100% { height: 22%; opacity: 0.7; }
+}
+
+/* Active: JS drives height + color via inline style */
+.mlp-strip--active {
+  animation: none !important;
+}
+
+/* Band frequency labels below each strip */
+.mlp-band-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 6px;
+  letter-spacing: 0.1em;
+  color: rgba(0,0,0,0.22);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* Hide on mobile — nav moves to bottom */
+@media (max-width: 768px) {
+  .music-led-panel {
+    display: none;
+  }
+}

@@ -147,9 +147,9 @@
   text-transform: uppercase;
 }
 
-/* Right side card stack */
+/* Right side — Playlist panel */
 .home-right {
-  flex: 0 0 300px;
+  flex: 0 0 340px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -309,6 +309,7 @@
   position: relative;
   z-index: 1;
 }
+
 
 @media (max-width: 900px) {
   .home-content {
