@@ -1,4 +1,7 @@
+import { useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
+import MusicLED from './MusicLED';
+import Playlist from './Playlist';
 import './Home.css';
 
 const stagger = {
@@ -19,8 +22,14 @@ const STATS = [
 ];
 
 export default function Home({ onNavigate }) {
+  const [analyser, setAnalyser] = useState(null);
+  const handleAnalyser = useCallback((node) => setAnalyser(node), []);
+
   return (
     <div className="home-page">
+      {/* Music LED strip — fixed right edge */}
+      <MusicLED analyser={analyser} />
+
       {/* Decorative background grid */}
       <div className="home-grid-bg" />
 
@@ -75,6 +84,10 @@ export default function Home({ onNavigate }) {
                 <span className="stat-label">{s.label}</span>
               </div>
             ))}
+          </motion.div>
+
+          <motion.div variants={fadeUp} className="home-music">
+            <Playlist onAnalyserReady={handleAnalyser} />
           </motion.div>
         </motion.div>
 
