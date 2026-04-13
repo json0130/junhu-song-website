@@ -1,7 +1,7 @@
 .photos-page { background: var(--bg); }
 
 .photos-inner {
-  max-width: 1100px;
+  max-width: 1400px;
   width: 100%;
   display: flex;
   flex-direction: column;
@@ -19,7 +19,7 @@
 
 .photo-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   grid-auto-rows: 180px;
   gap: 12px;
 }
@@ -28,6 +28,11 @@
   cursor: pointer;
   border-radius: 14px;
   overflow: hidden;
+}
+
+.photo-item.photo-text {
+  overflow: visible;
+  cursor: default;
 }
 
 .photo-wide { grid-column: span 2; }
@@ -171,6 +176,26 @@
 }
 
 .lightbox-close:hover { background: rgba(255,255,255,0.3); }
+
+/* Text cells — no box, just bare text */
+.photo-text {
+  background: transparent;
+  border-radius: 0;
+  display: flex;
+  align-items: flex-end;
+  padding: 8px 4px;
+  overflow: visible;
+  cursor: default;
+}
+
+.photo-text-content {
+  font-family: var(--font-display);
+  font-size: clamp(18px, 2.2vw, 32px);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--black);
+}
 
 @media (max-width: 900px) {
   .photo-grid { grid-template-columns: repeat(2, 1fr); }

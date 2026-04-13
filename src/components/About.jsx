@@ -241,53 +241,53 @@ export default function About() {
       */}
       <svg className="ac-connectors" viewBox="0 0 1000 700" preserveAspectRatio="none">
         <defs>
-          <marker id="arr" markerWidth="7" markerHeight="7" refX="4" refY="3.5" orient="auto">
-            <path d="M0,0 L0,7 L7,3.5 z" fill="rgba(13,14,16,0.35)" />
+          <marker id="arr" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+            <polyline points="1,1 7,4 1,7" fill="none" stroke="rgba(13,14,16,0.45)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
           </marker>
         </defs>
 
-        {/* Name (top-left) → Center: two-segment elbow — right then down-right */}
+        {/* Name (top-left) → Center: right then down — strict 90° */}
         <polyline
-          points="200,110 280,110 310,270"
+          points="200,110 310,110 310,310"
           fill="none"
           stroke="rgba(13,14,16,0.15)"
-          strokeWidth="1"
+          strokeWidth="1.5"
           markerEnd="url(#arr)"
         />
 
-        {/* Stats (mid-top) → Center: diagonal down-left */}
+        {/* Stats (mid-top) → Center: down then left — strict 90° */}
         <polyline
-          points="440,145 440,200 380,270"
+          points="440,145 440,310 370,310"
           fill="none"
           stroke="rgba(13,14,16,0.15)"
-          strokeWidth="1"
+          strokeWidth="1.5"
           markerEnd="url(#arr)"
         />
 
-        {/* Education (top-right) → Center: left then down-left */}
+        {/* Education (top-right) → Center: down then left — strict 90° */}
         <polyline
-          points="690,120 560,120 530,270"
+          points="690,120 690,310 530,310"
           fill="none"
           stroke="rgba(13,14,16,0.15)"
-          strokeWidth="1"
+          strokeWidth="1.5"
           markerEnd="url(#arr)"
         />
 
-        {/* Contact (bottom-left) → Center: right then up-right */}
+        {/* Contact (bottom-left) → Center: right then up — strict 90° */}
         <polyline
-          points="170,490 280,490 300,420"
+          points="170,490 310,490 310,390"
           fill="none"
           stroke="rgba(13,14,16,0.15)"
-          strokeWidth="1"
+          strokeWidth="1.5"
           markerEnd="url(#arr)"
         />
 
-        {/* Skills (bottom-right) → Center: left then up-left */}
+        {/* Skills (bottom-right) → Center: left then up — strict 90° */}
         <polyline
-          points="640,460 540,460 530,410"
+          points="640,460 530,460 530,390"
           fill="none"
           stroke="rgba(13,14,16,0.15)"
-          strokeWidth="1"
+          strokeWidth="1.5"
           markerEnd="url(#arr)"
         />
 
@@ -307,11 +307,7 @@ export default function About() {
         animate="show"
       >
         <div className="ac-center-inner">
-          <span className="ac-file-label">FILE_01 //</span>
           <h1 className="ac-graffiti">WHO AM I</h1>
-          <div className="ac-center-dot-row">
-            <span className="ac-dot" /><span className="ac-dot" /><span className="ac-dot" />
-          </div>
         </div>
       </motion.div>
 
