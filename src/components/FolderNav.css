@@ -1,4 +1,4 @@
-/* ── Manila-folder nav, right edge, fanned at angles ── */
+/* ── File-stack nav, right edge ── */
 
 .folder-nav {
   position: fixed;
@@ -7,15 +7,17 @@
   height: 100vh;
   z-index: 100;
   pointer-events: none;
+  overflow: visible;
 }
 
 .folder-tab {
   position: absolute;
   right: 0;
+  top: 0;
   width: 52px;
-  height: 200px;
+  height: 100vh;
   cursor: pointer;
-  transform-origin: right center;
+  transform-origin: right bottom;
   pointer-events: auto;
   overflow: visible;
   display: flex;
@@ -23,106 +25,122 @@
 }
 
 /* ── Folder spine ── */
+/* Extends 200px behind the viewport so rotating reveals a full
+   continuous sheet instead of a narrow clipped strip. */
 .f-folder {
   position: absolute;
-  right: 0;
+  right: -200px;
   top: 0;
-  width: 52px;
+  width: 260px;
   height: 100%;
   border-radius: 10px 0 0 10px;
-  border: 1.5px solid transparent;
+  border: 1px solid rgba(0,0,0,0.08);
   border-right: none;
-  background: transparent;
-  transition: background 0.28s ease, border-color 0.28s ease, box-shadow 0.28s ease;
+  background: #ffffff;
+  transition: border-color 0.28s ease, box-shadow 0.28s ease;
   overflow: visible;
 }
 
+/* Light palette — soft whites and greys matching site --bg:#ECEEF1 */
+.f-folder.tab-0 { background: #ffffff; }   /* pure white      — HOME     */
+.f-folder.tab-1 { background: #f5f6f8; }   /* off-white       — ABOUT    */
+.f-folder.tab-2 { background: #eceef1; }   /* site bg grey    — ARCHIVE  */
+.f-folder.tab-3 { background: #e4e7ec; }   /* light grey      — PROJECTS */
+.f-folder.tab-4 { background: #dde0e7; }   /* mid-light grey  — LOG      */
+.f-folder.tab-5 { background: #d5d9e2; }   /* deeper grey     — GALLERY  */
+
 .folder-tab:hover .f-folder:not(.active) {
-  background: rgba(255,255,255,0.60);
-  border-color: rgba(255,255,255,0.35);
-  backdrop-filter: blur(14px) saturate(1.6);
-  -webkit-backdrop-filter: blur(14px) saturate(1.6);
-  box-shadow: -5px 0 28px rgba(0,0,0,0.09);
+  border-color: rgba(0,0,0,0.14);
+  box-shadow: -6px 0 32px rgba(0,0,0,0.12);
 }
 
 .f-folder.active {
-  background: rgba(10,10,10,0.88);
-  border-color: rgba(255,255,255,0.09);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  box-shadow: -5px 0 28px rgba(0,0,0,0.20);
+  background: #0d0e10 !important;
+  border-color: rgba(79,168,255,0.20);
+  box-shadow: -6px 0 32px rgba(79,168,255,0.10);
 }
 
-/* ── Ear — raised notch at varying heights, sticks left ── */
+/* ── Ear — tag that sticks left at staggered heights ── */
 .f-ear {
   position: absolute;
-  left: -30px;
-  width: 30px;
-  height: 40px;
-  border-radius: 6px 0 0 6px;
-  border: 1.5px solid transparent;
+  /* left is set to -(ear width) dynamically — use negative margin trick */
+  left: 0;
+  transform: translateX(-100%);
+  width: max-content;
+  min-width: 48px;
+  padding: 14px 12px;
+  height: auto;
+  min-height: 56px;
+  border-radius: 8px 0 0 8px;
+  border: 1px solid rgba(0,0,0,0.08);
   border-right: none;
-  background: transparent;
+  background: #ffffff;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  transition: background 0.28s ease, border-color 0.28s ease;
+  gap: 6px;
+  transition: border-color 0.28s ease, box-shadow 0.28s ease;
   overflow: hidden;
 }
 
+/* Ear colours match their folder */
+.f-ear.tab-0 { background: #ffffff; }
+.f-ear.tab-1 { background: #f5f6f8; }
+.f-ear.tab-2 { background: #eceef1; }
+.f-ear.tab-3 { background: #e4e7ec; }
+.f-ear.tab-4 { background: #dde0e7; }
+.f-ear.tab-5 { background: #d5d9e2; }
+
 .folder-tab:hover .f-ear:not(.active) {
-  background: rgba(255,255,255,0.60);
-  border-color: rgba(255,255,255,0.35);
-  backdrop-filter: blur(14px) saturate(1.6);
-  -webkit-backdrop-filter: blur(14px) saturate(1.6);
+  border-color: rgba(0,0,0,0.16);
+  box-shadow: -4px 0 16px rgba(0,0,0,0.10);
 }
 
 .f-ear.active {
-  background: rgba(10,10,10,0.88);
+  background: #0d0e10 !important;
   border-color: rgba(79,168,255,0.30);
 }
 
+/* ── Ear label ── */
 .f-ear-label {
-  font-family: var(--font-mono);
-  font-size: 6px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
   text-transform: uppercase;
   writing-mode: vertical-rl;
   transform: rotate(180deg);
   color: var(--grey-mid);
-  text-shadow: 0 0 8px rgba(255,255,255,0.9), 0 1px 3px rgba(0,0,0,0.3);
   transition: color 0.2s ease;
   line-height: 1;
+  white-space: nowrap;
 }
 
 .folder-tab:hover .f-ear-label {
-  color: var(--blue);
-  text-shadow: 0 0 10px rgba(79,168,255,0.5), 0 1px 3px rgba(0,0,0,0.3);
+  color: var(--black);
 }
 
 .f-ear.active .f-ear-label {
-  color: rgba(255,255,255,0.5);
-  text-shadow: none;
+  color: var(--blue);
 }
 
 .f-ear-dot {
-  width: 5px;
-  height: 5px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   background: var(--blue);
   flex-shrink: 0;
-  box-shadow: 0 0 8px rgba(79,168,255,0.8);
+  box-shadow: 0 0 10px rgba(79,168,255,0.9);
 }
 
-/* ── Expanded panel — slides left on hover/active ── */
+/* ── Expanded panel — slides left on active ── */
 .f-expanded {
   position: absolute;
   right: 52px;
-  top: 0;
-  height: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 160px;
   width: 0;
   opacity: 0;
   overflow: hidden;
@@ -183,13 +201,6 @@
 
 .f-expanded.active .f-sub { color: var(--blue); }
 
-/* ── Exiting ── */
-.folder-tab.exiting .f-folder,
-.folder-tab.exiting .f-ear {
-  transform: translateX(300px);
-  transition: transform 0.42s cubic-bezier(0.76, 0, 0.24, 1);
-}
-
 /* ── Mobile ── */
 @media (max-width: 768px) {
   .folder-nav {
@@ -200,16 +211,14 @@
   }
   .folder-tab {
     position: relative; top: auto !important;
-    width: 52px; height: 52px;
+    width: 52px; height: 52px !important;
     transform: none !important;
   }
   .f-folder {
-    width: 52px; height: 52px;
+    right: 0; width: 52px; height: 52px;
     border-radius: 8px 8px 0 0;
-    border-right: 1.5px solid;
+    border-right: 1px solid rgba(255,255,255,0.07);
     border-bottom: none;
-    background: rgba(255,255,255,0.55) !important;
-    backdrop-filter: blur(10px);
   }
   .f-ear { display: none; }
   .f-expanded { display: none; }
