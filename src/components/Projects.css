@@ -9,7 +9,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 40px;
-  align-items: center;
+  align-items: start;
   width: 100%;
   max-width: 1300px;
   overflow: visible;
@@ -129,18 +129,30 @@
   flex-direction: column;
   align-items: flex-start;
   gap: 28px;
-  transform: translateX(30%);
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
+  right: 180px;
+  width: 900px;
+  pointer-events: none;
+  margin-top: 100px;
 }
 
-/* Clip: only shows the left portion of the wheel */
+/* Clip: fixed size so cards never shift the layout */
 .reel-clip {
-  width: 480px;
+  width: 900px;
+  height: 900px;
   overflow: hidden;
   position: relative;
+  flex-shrink: 0;
+  pointer-events: auto;
+  -webkit-mask-image: linear-gradient(to right, black 0%, black 80%, transparent 100%);
+  mask-image: linear-gradient(to right, black 0%, black 80%, transparent 100%);
 }
 
 .reel-wheel {
-  position: relative;
+  position: absolute;
+  inset: 0;
   width: 900px;
   height: 900px;
   display: flex;
@@ -304,6 +316,7 @@
   flex-direction: column;
   align-items: center;
   gap: 12px;
+  pointer-events: auto;
 }
 
 .reel-dots {

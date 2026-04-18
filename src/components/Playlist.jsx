@@ -1,155 +1,173 @@
 import { useState, useRef, useCallback } from 'react';
+import { motion, useAnimation } from 'framer-motion';
 import './Playlist.css';
 
 const TRACKS = [
-  { id: 1, title: 'Blinding Lights',    artist: 'The Weeknd',   duration: '3:20' },
-  { id: 2, title: 'Levitating',          artist: 'Dua Lipa',     duration: '3:23' },
-  { id: 3, title: 'Stay',               artist: 'Kid LAROI',     duration: '2:21' },
-  { id: 4, title: 'Peaches',            artist: 'Justin Bieber', duration: '3:18' },
-  { id: 5, title: 'good 4 u',           artist: 'Olivia Rodrigo','duration': '2:58' },
+  { id: 1, title: 'Blinding Lights',  artist: 'The Weeknd'    },
+  { id: 2, title: 'Levitating',        artist: 'Dua Lipa'      },
+  { id: 3, title: 'Stay',             artist: 'Kid LAROI'      },
+  { id: 4, title: 'Peaches',          artist: 'Justin Bieber'  },
+  { id: 5, title: 'good 4 u',         artist: 'Olivia Rodrigo' },
+  { id: 6, title: 'Heat Waves',       artist: 'Glass Animals'  },
+  { id: 7, title: 'Levitating',       artist: 'Dua Lipa'       },
 ];
 
-/**
- * Playlist — shows mock tracks. When a track is played it creates an
- * AudioContext source and calls onAnalyserReady(analyserNode) so the
- * parent can wire it to the MusicLED strip.
- */
 export default function Playlist({ onAnalyserReady }) {
-  const [activeId, setActiveId] = useState(null);
+  const [activeId,  setActiveId]  = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
 
-  const audioRef     = useRef(null);
   const ctxRef       = useRef(null);
   const sourceRef    = useRef(null);
   const analyserRef  = useRef(null);
+  const activeIdRef  = useRef(null);
+  const isPlayingRef = useRef(false);
+  const spinControls = useAnimation();
+  const rotationRef  = useRef(0);
 
   const initAudio = useCallback(() => {
-    if (ctxRef.current) return; // already set up
-
-    const ctx      = new (window.AudioContext || window.webkitAudioContext)();
+    if (ctxRef.current) return;
+    const AudioCtx = window.AudioContext || /** @type {any} */ (window).webkitAudioContext;
+    const ctx      = new AudioCtx();
     const analyser = ctx.createAnalyser();
     analyser.fftSize = 256;
     analyser.connect(ctx.destination);
-
     ctxRef.current      = ctx;
     analyserRef.current = analyser;
     onAnalyserReady?.(analyser);
   }, [onAnalyserReady]);
 
+  const startSpin = () => {
+    spinControls.start({
+      rotate: rotationRef.current - 3600,
+      transition: { duration: 100, ease: 'linear', repeat: Infinity, repeatType: 'loop' },
+    });
+  };
+
+  const pauseSpin = async () => {
+    await spinControls.stop();
+  };
+
   const handlePlay = (track) => {
     initAudio();
-
     const ctx      = ctxRef.current;
     const analyser = analyserRef.current;
 
-    if (activeId === track.id && isPlaying) {
-      // Pause current
-      audioRef.current?.pause();
+    // Toggle off if same track is already playing
+    if (activeIdRef.current === track.id && isPlayingRef.current) {
+      sourceRef.current?.disconnect();
+      sourceRef.current = null;
+      isPlayingRef.current = false;
       setIsPlaying(false);
+      pauseSpin();
       return;
     }
 
-    // Disconnect previous source
+    // Stop whatever is currently playing
     sourceRef.current?.disconnect();
+    sourceRef.current = null;
 
-    // For demo purposes: play a silent oscillator tied to the analyser
-    // (real usage: swap for <audio src="..."> files in /public/audio/)
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current = null;
-    }
-
-    // Create a demo tone so the LED reacts visually without needing audio files
-    const osc       = ctx.createOscillator();
-    const gain      = ctx.createGain();
-    // Vary frequency per track so LED shows different colors
-    const freqs     = [80, 440, 1200, 3000, 6000];
+    const osc   = ctx.createOscillator();
+    const gain  = ctx.createGain();
+    const freqs = [80, 440, 1200, 3000, 6000, 220, 880];
     osc.frequency.value = freqs[(track.id - 1) % freqs.length];
-    osc.type = ['sine','square','triangle','sawtooth','sine'][(track.id - 1) % 5];
-    gain.gain.value = 0.04; // very quiet — just for analysis
-
+    osc.type = ['sine','square','triangle','sawtooth','sine','sine','square'][(track.id - 1) % 7];
+    gain.gain.value = 0.04;
     osc.connect(gain);
     gain.connect(analyser);
     osc.start();
+    sourceRef.current = { disconnect: () => { try { osc.stop(); } catch(_){} osc.disconnect(); gain.disconnect(); } };
 
-    // Store osc as "source" so we can stop it later
-    sourceRef.current = { disconnect: () => { osc.stop(); osc.disconnect(); gain.disconnect(); } };
-
-    // Resume context if suspended (browser autoplay policy)
     if (ctx.state === 'suspended') ctx.resume();
 
+    activeIdRef.current  = track.id;
+    isPlayingRef.current = true;
     setActiveId(track.id);
     setIsPlaying(true);
+    startSpin();
   };
 
   const handleStop = () => {
     sourceRef.current?.disconnect();
-    sourceRef.current = null;
+    sourceRef.current    = null;
+    activeIdRef.current  = null;
+    isPlayingRef.current = false;
     setIsPlaying(false);
     setActiveId(null);
+    pauseSpin();
     onAnalyserReady?.(null);
   };
 
+  const activeTrack = TRACKS.find(t => t.id === activeId);
+
   return (
-    <div className="playlist">
-      <div className="pl-header">
-        <span className="pl-label">PLAYLIST //</span>
-        <span className="pl-led-hint">LED REACTIVE</span>
+    <div className="pl-wrap">
+      {/* ── CD disc — half visible, transparent bg ── */}
+      <div className="pl-disc-area">
+        <motion.div
+          className="pl-disc"
+          animate={spinControls}
+          initial={{ rotate: 0 }}
+        >
+          <div className="pl-disc-rings" />
+          <div className="pl-disc-label">
+            <div className="pl-disc-hole" />
+          </div>
+        </motion.div>
+
+        {/* Play / stop button centred on the visible disc */}
+        <button
+          className={`pl-disc-btn ${isPlaying ? 'pl-disc-btn--playing' : ''}`}
+          onClick={() => {
+            if (isPlaying) handleStop();
+            else handlePlay(TRACKS.find(t => t.id === activeId) || TRACKS[0]);
+          }}
+          aria-label={isPlaying ? 'Stop' : 'Play'}
+        >
+          {isPlaying ? '■' : '▶'}
+        </button>
       </div>
 
-      <div className="pl-tracks">
-        {TRACKS.map((track, i) => {
-          const isActive = activeId === track.id;
-          return (
-            <div
-              key={track.id}
-              className={`pl-track ${isActive ? 'pl-track--active' : ''}`}
-              onClick={() => handlePlay(track)}
-              role="button"
-              tabIndex={0}
-              onKeyDown={e => e.key === 'Enter' && handlePlay(track)}
-            >
-              <span className="pl-num">{String(i + 1).padStart(2, '0')}</span>
-
-              <div className="pl-info">
-                <span className="pl-title">{track.title}</span>
-                <span className="pl-artist">{track.artist}</span>
-              </div>
-
-              <span className="pl-dur">{track.duration}</span>
-
-              <div className="pl-play-icon">
-                {isActive && isPlaying ? (
-                  /* Pause bars */
-                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                    <rect x="2" y="1" width="3" height="10" rx="1" fill="currentColor"/>
-                    <rect x="7" y="1" width="3" height="10" rx="1" fill="currentColor"/>
-                  </svg>
-                ) : (
-                  /* Play triangle */
-                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                    <path d="M2 1l9 5-9 5V1z" fill="currentColor"/>
-                  </svg>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {activeId && (
-        <div className="pl-footer">
-          <span className="pl-now-label">NOW PLAYING</span>
-          <span className="pl-now-title">
-            {TRACKS.find(t => t.id === activeId)?.title}
-          </span>
-          <button className="pl-stop" onClick={handleStop} aria-label="Stop">
-            <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-              <rect x="1" y="1" width="8" height="8" rx="1" fill="currentColor"/>
-            </svg>
-          </button>
+      {/* ── Track list ── */}
+      <div className="pl-body">
+        <div className="pl-title-row">
+          <span className="pl-main-title">PLAY LIST</span>
         </div>
-      )}
+
+        <div className="pl-list">
+          {TRACKS.map((track, i) => {
+            const isActive = activeId === track.id;
+            return (
+              <div
+                key={track.id}
+                className={`pl-row ${isActive ? 'pl-row--active' : ''}`}
+                onClick={() => handlePlay(track)}
+              >
+                <span className="pl-row-num">{i + 1}</span>
+                <span className="pl-row-title">{track.title.toUpperCase()}</span>
+                {isActive && isPlaying && <span className="pl-row-playing">▶</span>}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Bottom info */}
+        <div className="pl-info-row">
+          {activeTrack ? (
+            <>
+              <button className="pl-stop-btn" onClick={handleStop}>■ STOP</button>
+              <div className="pl-track-info">
+                <span className="pl-track-num">TRACK #{activeId}</span>
+                <span className="pl-track-name">{activeTrack.artist.toUpperCase()}</span>
+              </div>
+            </>
+          ) : (
+            <div className="pl-track-info">
+              <span className="pl-track-num">TRACK #—</span>
+              <span className="pl-track-name">SELECT A TRACK</span>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

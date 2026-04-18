@@ -51,12 +51,12 @@
   animation: strip-idle 6s ease-in-out infinite alternate;
 }
 
-.mlp-strip-wrapper:nth-child(1) .mlp-strip { animation-duration: 5.5s; background: hsl(0,   55%, 52%); box-shadow: 0 0 6px 2px hsla(0,   55%, 52%, 0.4); }
-.mlp-strip-wrapper:nth-child(2) .mlp-strip { animation-duration: 6.2s; background: hsl(20,  60%, 52%); box-shadow: 0 0 6px 2px hsla(20,  60%, 52%, 0.4); animation-delay: 0.5s; }
-.mlp-strip-wrapper:nth-child(3) .mlp-strip { animation-duration: 5.8s; background: hsl(55,  65%, 50%); box-shadow: 0 0 6px 2px hsla(55,  65%, 50%, 0.4); animation-delay: 1.0s; }
-.mlp-strip-wrapper:nth-child(4) .mlp-strip { animation-duration: 6.5s; background: hsl(110, 55%, 48%); box-shadow: 0 0 6px 2px hsla(110, 55%, 48%, 0.4); animation-delay: 0.3s; }
-.mlp-strip-wrapper:nth-child(5) .mlp-strip { animation-duration: 5.3s; background: hsl(200, 65%, 52%); box-shadow: 0 0 6px 2px hsla(200, 65%, 52%, 0.4); animation-delay: 0.8s; }
-.mlp-strip-wrapper:nth-child(6) .mlp-strip { animation-duration: 6.8s; background: hsl(260, 60%, 55%); box-shadow: 0 0 6px 2px hsla(260, 60%, 55%, 0.4); animation-delay: 1.3s; }
+.mlp-strip-wrapper:nth-child(1) .mlp-strip { animation-duration: 5.5s; background: hsl(215, 80%, 52%); box-shadow: 0 0 6px 2px hsla(215, 80%, 52%, 0.5); }
+.mlp-strip-wrapper:nth-child(2) .mlp-strip { animation-duration: 6.2s; background: hsl(210, 85%, 56%); box-shadow: 0 0 6px 2px hsla(210, 85%, 56%, 0.5); animation-delay: 0.5s; }
+.mlp-strip-wrapper:nth-child(3) .mlp-strip { animation-duration: 5.8s; background: hsl(207, 88%, 60%); box-shadow: 0 0 6px 2px hsla(207, 88%, 60%, 0.5); animation-delay: 1.0s; }
+.mlp-strip-wrapper:nth-child(4) .mlp-strip { animation-duration: 6.5s; background: hsl(205, 90%, 64%); box-shadow: 0 0 6px 2px hsla(205, 90%, 64%, 0.5); animation-delay: 0.3s; }
+.mlp-strip-wrapper:nth-child(5) .mlp-strip { animation-duration: 5.3s; background: hsl(200, 88%, 68%); box-shadow: 0 0 6px 2px hsla(200, 88%, 68%, 0.5); animation-delay: 0.8s; }
+.mlp-strip-wrapper:nth-child(6) .mlp-strip { animation-duration: 6.8s; background: hsl(195, 85%, 72%); box-shadow: 0 0 6px 2px hsla(195, 85%, 72%, 0.5); animation-delay: 1.3s; }
 
 @keyframes strip-idle {
   0%   { height: 15%; opacity: 0.55; }

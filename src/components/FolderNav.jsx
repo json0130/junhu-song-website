@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { useState, useEffect } from 'react';
+import { motion, useAnimate } from 'framer-motion';
 import './FolderNav.css';
 
 const TABS = [
@@ -11,9 +11,49 @@ const TABS = [
   { id: 'photos',       label: 'GALLERY',  code: 'FILE_05//', sub: 'Photos'   },
 ];
 
-const EAR_TOPS = [8, 22, 36, 50, 64, 78];
-// Random stack offsets — fixed so they don't re-randomise on re-render
-const STACK_OFFSETS = [0, 18, 6, 30, 12, 24];
+const EAR_TOPS = [8, 22, 36, 50, 69, 78];
+const STACK_OFFSETS = [0, 21, 7, 35, 14, 28];
+const STACK_Z = [6, 3, 5, 1, 4, 2];
+
+function FolderTab({ tab, i, isActive, isHovered, isExiting, onMouseEnter, onMouseLeave, onClick }) {
+  const [scope, animate] = useAnimate();
+
+  // Fire slide-out-and-back when this tab becomes active
+  useEffect(() => {
+    if (!isActive) return;
+    animate(scope.current, { x: '-100vw' }, { duration: 0.5, ease: [0.76, 0, 0.24, 1] })
+      .then(() => animate(scope.current, { x: 0 }, { duration: 0.5, ease: [0.76, 0, 0.24, 1] }));
+  }, [isActive]);
+
+  const zIndex = isExiting ? 35 : isHovered ? 1 : STACK_Z[i];
+
+  return (
+    <motion.div
+      ref={scope}
+      className={`folder-tab ${isActive ? 'active' : ''} ${isExiting ? 'exiting' : ''}`}
+      style={{ zIndex, right: STACK_OFFSETS[i] }}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+      onClick={onClick}
+      initial={{ x: 90 }}
+      animate={{
+        x: isExiting ? 300 : 0,
+        rotate: isHovered && !isActive ? -8 : 0,
+      }}
+      transition={{ delay: i * 0.04, duration: 0.38, ease: [0.76, 0, 0.24, 1] }}
+    >
+      <div className={`f-folder tab-${i} ${isActive ? 'active' : ''}`}>
+        <div
+          className={`f-ear tab-${i} ${isActive ? 'active' : ''}`}
+          style={{ top: `${EAR_TOPS[i]}%` }}
+        >
+          <span className="f-ear-label">{tab.label}</span>
+          {isActive && <span className="f-ear-dot" />}
+        </div>
+      </div>
+    </motion.div>
+  );
+}
 
 export default function FolderNav({ activePage, onNavigate }) {
   const [hoveredTab, setHoveredTab] = useState(null);
@@ -26,59 +66,20 @@ export default function FolderNav({ activePage, onNavigate }) {
   };
 
   return (
-    <div className="folder-nav">
-      {TABS.map((tab, i) => {
-        const isActive  = tab.id === activePage;
-        const isHovered = hoveredTab === tab.id;
-
-        const zIndex = exiting === tab.id ? 35
-                     : isActive            ? 25
-                     : isHovered           ? 1
-                     : 10 - i;
-
-        // HOME (i=0) closest to screen edge (right:0), GALLERY (i=5) furthest left
-        const stackOffset = STACK_OFFSETS[i];
-
-        return (
-          <motion.div
-            key={tab.id}
-            className={`folder-tab ${isActive ? 'active' : ''} ${exiting === tab.id ? 'exiting' : ''}`}
-            style={{ zIndex, right: stackOffset }}
-            onMouseEnter={() => setHoveredTab(tab.id)}
-            onMouseLeave={() => setHoveredTab(null)}
-            onClick={() => handleClick(tab.id)}
-            initial={{ x: 90 }}
-            animate={{
-              x: exiting === tab.id ? 300 : 0,
-              rotate: isHovered && !isActive ? -8 : 0,
-            }}
-            transition={{ delay: i * 0.04, duration: 0.38, ease: [0.76, 0, 0.24, 1] }}
-          >
-            {/* Label panel — expands to the left on active only */}
-            <motion.div
-              className={`f-expanded ${isActive ? 'active' : ''}`}
-              animate={{ width: isActive ? 220 : 0, opacity: isActive ? 1 : 0 }}
-              transition={{ duration: 0.42, ease: [0.76, 0, 0.24, 1] }}
-            >
-              {isActive && <div className="f-active-bar" />}
-              <span className="f-code">{tab.code}</span>
-              <span className="f-label">{tab.label}</span>
-              <span className="f-sub">{tab.sub}</span>
-            </motion.div>
-
-            {/* Folder spine + raised ear notch */}
-            <div className={`f-folder tab-${i} ${isActive ? 'active' : ''}`}>
-              <div
-                className={`f-ear tab-${i} ${isActive ? 'active' : ''}`}
-                style={{ top: `${EAR_TOPS[i]}%` }}
-              >
-                <span className="f-ear-label">{tab.label}</span>
-                {isActive && <span className="f-ear-dot" />}
-              </div>
-            </div>
-          </motion.div>
-        );
-      })}
+    <div className="folder-nav" data-page={activePage}>
+      {TABS.map((tab, i) => (
+        <FolderTab
+          key={tab.id}
+          tab={tab}
+          i={i}
+          isActive={tab.id === activePage}
+          isHovered={hoveredTab === tab.id}
+          isExiting={exiting === tab.id}
+          onMouseEnter={() => setHoveredTab(tab.id)}
+          onMouseLeave={() => setHoveredTab(null)}
+          onClick={() => handleClick(tab.id)}
+        />
+      ))}
     </div>
   );
 }

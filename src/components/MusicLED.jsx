@@ -10,12 +10,12 @@ import './MusicLED.css';
 
 // Each strip covers a frequency range and has a base hue
 const BANDS = [
-  { label: 'SUB',  freqMax: 60,   baseHue: 0   },   // deep red
-  { label: 'BASS', freqMax: 200,  baseHue: 20  },   // orange
-  { label: 'LMD',  freqMax: 600,  baseHue: 55  },   // yellow
-  { label: 'MID',  freqMax: 2000, baseHue: 110 },   // green
-  { label: 'HMD',  freqMax: 6000, baseHue: 200 },   // cyan-blue
-  { label: 'TRB',  freqMax: 20000,baseHue: 260 },   // purple
+  { label: 'SUB',  freqMax: 60,   baseHue: 215 },   // deep blue
+  { label: 'BASS', freqMax: 200,  baseHue: 210 },   // blue
+  { label: 'LMD',  freqMax: 600,  baseHue: 205 },   // blue
+  { label: 'MID',  freqMax: 2000, baseHue: 200 },   // blue-cyan
+  { label: 'HMD',  freqMax: 6000, baseHue: 195 },   // cyan
+  { label: 'TRB',  freqMax: 20000,baseHue: 190 },   // light cyan
 ];
 
 export default function MusicLED({ analyser }) {

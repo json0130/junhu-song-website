@@ -2,12 +2,25 @@
 
 .folder-nav {
   position: fixed;
-  right: 0;
+  right: 2%;
   top: 0;
   height: 100vh;
   z-index: 100;
   pointer-events: none;
   overflow: visible;
+}
+
+/* Fade the right edge of the viewport behind the nav */
+.folder-nav::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 60px;
+  height: 100vh;
+  background: linear-gradient(to right, transparent, var(--bg) 95%);
+  pointer-events: none;
+  z-index: 99;
 }
 
 .folder-tab {
@@ -55,9 +68,9 @@
 }
 
 .f-folder.active {
-  background: #0d0e10 !important;
-  border-color: rgba(79,168,255,0.20);
-  box-shadow: -6px 0 32px rgba(79,168,255,0.10);
+  background: #2a7abf !important;
+  border-color: rgba(79,168,255,0.40);
+  box-shadow: -6px 0 32px rgba(79,168,255,0.25);
 }
 
 /* ── Ear — tag that sticks left at staggered heights ── */
@@ -98,8 +111,8 @@
 }
 
 .f-ear.active {
-  background: #0d0e10 !important;
-  border-color: rgba(79,168,255,0.30);
+  background: #2a7abf !important;
+  border-color: rgba(79,168,255,0.50);
 }
 
 /* ── Ear label ── */
@@ -122,7 +135,8 @@
 }
 
 .f-ear.active .f-ear-label {
-  color: var(--blue);
+  color: #ffffff;
+  font-weight: 800;
 }
 
 .f-ear-dot {
@@ -134,72 +148,6 @@
   box-shadow: 0 0 10px rgba(79,168,255,0.9);
 }
 
-/* ── Expanded panel — slides left on active ── */
-.f-expanded {
-  position: absolute;
-  right: 52px;
-  top: 50%;
-  transform: translateY(-50%);
-  height: 160px;
-  width: 0;
-  opacity: 0;
-  overflow: hidden;
-  white-space: nowrap;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: 0 20px;
-  gap: 6px;
-  border-radius: 12px 0 0 12px;
-  background: rgba(255,255,255,0.78);
-  border: 1.5px solid rgba(255,255,255,0.38);
-  border-right: none;
-  backdrop-filter: blur(16px) saturate(1.5);
-  -webkit-backdrop-filter: blur(16px) saturate(1.5);
-  box-shadow: -8px 0 32px rgba(0,0,0,0.08);
-  will-change: width, opacity;
-}
-
-.f-expanded.active {
-  background: rgba(10,10,10,0.90);
-  border-color: rgba(255,255,255,0.08);
-}
-
-.f-active-bar {
-  position: absolute;
-  left: 0; top: 0; bottom: 0;
-  width: 3px;
-  background: var(--blue);
-  border-radius: 0 2px 2px 0;
-}
-
-.f-code {
-  font-family: var(--font-mono);
-  font-size: 9px;
-  letter-spacing: 0.18em;
-  color: var(--blue);
-}
-
-.f-label {
-  font-family: var(--font-mono);
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  color: var(--black);
-  line-height: 1;
-}
-
-.folder-tab:hover .f-label { color: var(--blue); }
-.f-expanded.active .f-label { color: var(--white) !important; }
-
-.f-sub {
-  font-family: var(--font-mono);
-  font-size: 9px;
-  letter-spacing: 0.10em;
-  color: var(--grey-mid);
-}
-
-.f-expanded.active .f-sub { color: var(--blue); }
 
 /* ── Mobile ── */
 @media (max-width: 768px) {
@@ -222,4 +170,42 @@
   }
   .f-ear { display: none; }
   .f-expanded { display: none; }
+}
+
+/* ── Dark page overrides (projects page) ── */
+.folder-nav[data-page="projects"] .f-folder.tab-0 { background: #2a3a55; }
+.folder-nav[data-page="projects"] .f-folder.tab-1 { background: #2e3d52; }
+.folder-nav[data-page="projects"] .f-folder.tab-2 { background: #263545; }
+.folder-nav[data-page="projects"] .f-folder.tab-3 { background: #30304a; }
+.folder-nav[data-page="projects"] .f-folder.tab-4 { background: #263840; }
+.folder-nav[data-page="projects"] .f-folder.tab-5 { background: #30304a; }
+
+.folder-nav[data-page="projects"] .f-folder {
+  border-color: rgba(255,255,255,0.10);
+}
+.folder-nav[data-page="projects"] .folder-tab:hover .f-folder:not(.active) {
+  border-color: rgba(255,255,255,0.22);
+  box-shadow: -6px 0 32px rgba(0,0,0,0.5);
+}
+
+.folder-nav[data-page="projects"] .f-ear.tab-0 { background: #2a3a55; }
+.folder-nav[data-page="projects"] .f-ear.tab-1 { background: #2e3d52; }
+.folder-nav[data-page="projects"] .f-ear.tab-2 { background: #263545; }
+.folder-nav[data-page="projects"] .f-ear.tab-3 { background: #30304a; }
+.folder-nav[data-page="projects"] .f-ear.tab-4 { background: #263840; }
+.folder-nav[data-page="projects"] .f-ear.tab-5 { background: #30304a; }
+
+.folder-nav[data-page="projects"] .f-ear {
+  border-color: rgba(255,255,255,0.10);
+}
+.folder-nav[data-page="projects"] .f-ear-label {
+  color: rgba(255,255,255,0.60);
+}
+.folder-nav[data-page="projects"] .folder-tab:hover .f-ear-label {
+  color: #ffffff;
+}
+
+/* Fade to black instead of --bg on dark page */
+.folder-nav[data-page="projects"]::after {
+  background: linear-gradient(to right, transparent, var(--black) 95%);
 }

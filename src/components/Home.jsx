@@ -162,16 +162,6 @@ export default function Home({ onNavigate }) {
             <MusicLED analyser={analyser} />
           </div>
 
-          {/* View Projects — editorial dark stamp */}
-          <button className="scatter-stamp scatter-stamp--projects" onClick={() => onNavigate('projects')}>
-            <span className="scatter-stamp-text">VIEW<br />PROJECTS</span>
-            <span className="scatter-stamp-sub">///</span>
-          </button>
-
-          {/* About Me — bordered pill label */}
-          <button className="scatter-label scatter-label--about" onClick={() => onNavigate('about')}>
-            ABOUT ME →
-          </button>
         </motion.div>
       </div>
 
