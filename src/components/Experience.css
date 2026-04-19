@@ -1,7 +1,7 @@
 .exp-page { background: var(--bg); }
 
 .exp-inner {
-  max-width: 1300px;
+  max-width: none;
   width: 100%;
   display: flex;
   flex-direction: column;
@@ -38,121 +38,89 @@
   text-transform: uppercase;
 }
 
-/* ─── Horizontal Timeline ─── */
-.htimeline-outer {
+/* ─── Scrollable container ─── */
+.exp-scroll {
   width: 100%;
+  height: 75vh;
+  max-height: 75vh;
+  overflow-y: auto;
   overflow-x: auto;
-  overflow-y: visible;
-  padding-bottom: 16px;
   scrollbar-width: thin;
   scrollbar-color: var(--border) transparent;
-  scroll-behavior: smooth;
-  -webkit-mask-image: linear-gradient(to right, black 0%, black 80%, transparent 100%);
-  mask-image: linear-gradient(to right, black 0%, black 80%, transparent 100%);
-}
-
-.htimeline-outer::-webkit-scrollbar { height: 4px; }
-.htimeline-outer::-webkit-scrollbar-track { background: transparent; }
-.htimeline-outer::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-
-.htimeline {
-  display: flex;
-  align-items: center;
   position: relative;
-  min-width: max-content;
-  padding: 0 64px;
-  height: 560px;
 }
 
-.htimeline-rail {
+.exp-scroll::-webkit-scrollbar { width: 4px; height: 4px; }
+.exp-scroll::-webkit-scrollbar-track { background: transparent; }
+.exp-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* ─── Timeline canvas — fixed pixel width matching SVG_W ─── */
+.exp-vtimeline {
+  position: relative;
+  /* width set inline from SVG_W constant */
+}
+
+/* SVG spine behind everything */
+.exp-vsvg {
   position: absolute;
-  top: 50%;
+  top: 0;
   left: 0;
-  right: 0;
-  height: 2px;
-  background: var(--border);
-  transform: translateY(-50%);
-  z-index: 0;
-}
-
-.htimeline-node {
-  position: relative;
-  width: 240px;
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  height: 100%;
-  cursor: pointer;
-  z-index: 1;
-}
-
-.htimeline-half {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 100%;
-}
-
-.htimeline-half-top { justify-content: flex-end; }
-.htimeline-half-bottom { justify-content: flex-start; }
-
-.htimeline-stem {
-  width: 2px;
-  height: 28px;
-  background: var(--border);
-  flex-shrink: 0;
-  transition: background 0.3s ease;
-}
-
-.htimeline-dot {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  z-index: 2;
-  flex-shrink: 0;
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
-}
-
-/* Year marker appears above the rail at start of each year */
-.htimeline-year {
-  position: absolute;
-  top: calc(50% - 22px);
-  left: 50%;
-  transform: translateX(-50%);
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 100px;
-  padding: 2px 8px;
-  color: var(--grey-mid);
-  font-size: 8px;
-  letter-spacing: 0.12em;
   pointer-events: none;
-  z-index: 3;
-  white-space: nowrap;
+  z-index: 0;
+  overflow: visible;
 }
 
-/* Cards */
-.htimeline-card {
-  width: 210px;
+/* Ghost year labels */
+.exp-vyear {
+  position: absolute;
+  font-family: var(--font-display);
+  font-size: 56px;
+  font-weight: 900;
+  color: var(--black);
+  opacity: 0.07;
+  pointer-events: none;
+  z-index: 0;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  white-space: nowrap;
+  user-select: none;
+}
+
+/* Dot on spine */
+.exp-vdot {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 3;
+  cursor: pointer;
+}
+
+/* Cards — uniform size for all nodes */
+.exp-vcard {
+  position: absolute;
+  width: 440px;
   display: flex;
   flex-direction: column;
   gap: 7px;
   padding: 14px;
-  transition: border-color 0.25s ease, box-shadow 0.25s ease;
   cursor: pointer;
+  z-index: 2;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
   overflow: hidden;
 }
 
-.htimeline-card:hover {
-  box-shadow: var(--shadow-md);
+.exp-vcard:hover { box-shadow: var(--shadow-md); }
+.exp-vcard-active { box-shadow: var(--shadow-lg); }
+
+.exp-divider {
+  border: none;
+  border-top: 1px solid;
+  margin: 10px 0 6px;
 }
 
-.htimeline-card-active {
-  box-shadow: var(--shadow-md);
-}
-
+/* ─── Card internals ─── */
 .exp-type-badge {
   font-family: var(--font-mono);
   font-size: 8px;
@@ -165,14 +133,14 @@
 
 .htimeline-role {
   font-family: var(--font-display);
-  font-size: 13px;
+  font-size: 17px;
   font-weight: 700;
   color: var(--black);
   line-height: 1.3;
 }
 
 .htimeline-org {
-  font-size: 10px;
+  font-size: 13px;
   color: var(--grey-mid);
   font-weight: 300;
   line-height: 1.4;
@@ -180,17 +148,15 @@
 
 .htimeline-note {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 13px;
   letter-spacing: 0.06em;
   font-weight: 600;
 }
 
 .htimeline-period {
   font-family: var(--font-mono);
-  font-size: 8px;
+  font-size: 11px;
   letter-spacing: 0.12em;
-  padding: 8px 4px;
-  text-align: center;
 }
 
 .htimeline-items {
@@ -223,15 +189,78 @@
   top: 2px;
 }
 
+/* ─── Zoom-out button ─── */
+.exp-zoom-out-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  color: var(--grey-mid);
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  padding: 7px 16px;
+  cursor: pointer;
+  align-self: flex-start;
+  margin-bottom: 8px;
+  transition: color 0.2s, border-color 0.2s;
+}
+.exp-zoom-out-btn:hover { color: var(--black); border-color: var(--grey-mid); }
+
+/* ─── Prev / Next arrows ─── */
+.exp-nav-arrows {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.exp-arrow-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  color: var(--grey-mid);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  padding: 7px 14px;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
+}
+.exp-arrow-btn:hover:not(:disabled) { color: var(--black); border-color: var(--grey-mid); background: var(--white); }
+.exp-arrow-btn:disabled { opacity: 0.3; cursor: default; }
+
+.exp-arrow-index {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: var(--grey-mid);
+  min-width: 60px;
+  text-align: center;
+}
+
+/* ─── Tablet ─── */
+@media (max-width: 1200px) {
+  .exp-page { padding: 60px 40px 80px; }
+}
+
+/* ─── Mobile ─── */
 @media (max-width: 768px) {
   .exp-page { padding: 60px 32px 120px; }
-  .htimeline { height: auto; flex-direction: column; min-width: unset; padding: 32px 0; }
-  .htimeline-rail { display: none; }
-  .htimeline-node { width: 100%; height: auto; margin-bottom: 16px; }
-  .htimeline-half { flex: unset; }
-  .htimeline-half-top, .htimeline-half-bottom { justify-content: flex-start; }
-  .htimeline-stem { display: none; }
-  .htimeline-dot { display: none; }
-  .htimeline-card { width: 100%; }
-  .htimeline-year { position: static; transform: none; margin-bottom: 4px; }
+  .exp-scroll { max-height: none; overflow: visible; }
+  .exp-vtimeline { width: 100%; height: auto !important; }
+  .exp-vsvg { display: none; }
+  .exp-vyear { display: none; }
+  .exp-vdot { display: none; }
+  .exp-vcard {
+    position: static !important;
+    width: 100% !important;
+    margin-bottom: 16px;
+    transform: none !important;
+  }
 }

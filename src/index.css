@@ -57,10 +57,14 @@ body {
 .section-page {
   width: 100vw;
   min-height: 100vh;
-  padding: 80px 80px 80px 80px;
+  padding: clamp(40px, 6vw, 80px);
   display: flex;
   flex-direction: column;
   justify-content: center;
+}
+
+@media (max-width: 768px) {
+  .section-page { padding: 60px 24px 120px; }
 }
 
 .section-label {

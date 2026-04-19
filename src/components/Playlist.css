@@ -218,6 +218,12 @@
   50% { opacity: 0; }
 }
 
+@media (max-width: 1200px) {
+  .pl-wrap { width: 100%; max-width: 260px; }
+  .pl-disc { width: 220px; height: 220px; }
+  .pl-disc-area { height: 110px; }
+}
+
 /* Bottom info row */
 .pl-info-row {
   display: flex;
