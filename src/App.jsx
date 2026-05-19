@@ -9,6 +9,7 @@ import Achievements from './components/Achievements';
 import Projects from './components/Projects';
 import Experience from './components/Experience';
 import Photos from './components/Photos';
+import Music from './components/Music';
 
 const PAGES = {
   home: Home,
@@ -17,6 +18,7 @@ const PAGES = {
   projects: Projects,
   experience: Experience,
   photos: Photos,
+  music: Music,
 };
 
 function FolderSweep({ isAnimating }) {

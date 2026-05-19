@@ -1,6 +1,4 @@
-import { useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import MusicLED from './MusicLED';
 import Playlist from './Playlist';
 import './Home.css';
 
@@ -22,9 +20,6 @@ const STATS = [
 ];
 
 export default function Home({ onNavigate }) {
-  const [analyser, setAnalyser] = useState(null);
-  const handleAnalyser = useCallback((node) => setAnalyser(node), []);
-
   return (
     <div className="home-page">
       {/* Decorative background grid */}
@@ -154,13 +149,9 @@ export default function Home({ onNavigate }) {
           {/* Playlist — pinned card, top-right */}
           <div className="scattered-playlist">
             <div className="scatter-tape" />
-            <Playlist onAnalyserReady={handleAnalyser} />
+            <Playlist onNavigate={onNavigate} />
           </div>
 
-          {/* LED strips — floating device, below playlist */}
-          <div className="scattered-led">
-            <MusicLED analyser={analyser} />
-          </div>
 
         </motion.div>
       </div>

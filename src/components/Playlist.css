@@ -108,34 +108,211 @@
   border: 1px solid rgba(255,255,255,0.15);
 }
 
-/* Play / stop button on disc */
-.pl-disc-btn {
-  position: absolute;
-  bottom: 12px;
-  left: 50%;
-  transform: translateX(-50%);
+
+/* ── Transport controls ── */
+.pl-transport {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 0 4px;
+}
+
+.pl-nav-btn {
   font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.15em;
-  color: var(--grey-dark);
-  background: rgba(255,255,255,0.75);
-  border: 1px solid rgba(0,0,0,0.12);
-  border-radius: 20px;
-  padding: 4px 14px;
+  font-size: 8px;
+  letter-spacing: 0.05em;
+  color: var(--grey-mid);
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 10px;
   cursor: pointer;
-  backdrop-filter: blur(6px);
-  transition: background 0.15s, color 0.15s;
-  z-index: 2;
+  transition: color 0.15s, border-color 0.15s;
 }
 
-.pl-disc-btn:hover {
-  background: rgba(255,255,255,0.95);
+.pl-nav-btn:hover {
   color: var(--black);
+  border-color: var(--grey-mid);
 }
 
-.pl-disc-btn--playing {
+.pl-play-btn {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--white);
+  background: var(--blue);
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+  flex-shrink: 0;
+}
+
+.pl-play-btn:hover {
+  background: #3a9fff;
+  transform: scale(1.08);
+}
+
+.pl-loop-btn {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--grey-mid);
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 9px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+
+.pl-loop-btn:hover {
+  color: var(--black);
+  border-color: var(--grey-mid);
+}
+
+.pl-loop-btn--active {
   color: var(--blue);
-  border-color: rgba(79,168,255,0.35);
+  border-color: rgba(79,168,255,0.5);
+  background: rgba(79,168,255,0.08);
+}
+
+/* ── Controls (seek + transport + bars) below track list ── */
+.pl-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 16px 12px;
+  border-top: 1px solid var(--border);
+}
+
+/* Seek bar row */
+.pl-seek-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pl-time {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  color: var(--grey-mid);
+  min-width: 26px;
+  letter-spacing: 0.05em;
+}
+
+.pl-time:last-child {
+  text-align: right;
+}
+
+.pl-seek {
+  flex: 1;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--border);
+  outline: none;
+  cursor: pointer;
+}
+
+.pl-seek::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--blue);
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+
+.pl-seek::-webkit-slider-thumb:hover {
+  transform: scale(1.3);
+}
+
+.pl-seek::-moz-range-thumb {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--blue);
+  border: none;
+  cursor: pointer;
+}
+
+/* Transport buttons */
+.pl-transport {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.pl-nav-btn {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.05em;
+  color: var(--grey-mid);
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.pl-nav-btn:hover {
+  color: var(--black);
+  border-color: var(--grey-mid);
+}
+
+.pl-play-btn {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--white);
+  background: var(--blue);
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+  flex-shrink: 0;
+}
+
+.pl-play-btn:hover {
+  background: #3a9fff;
+  transform: scale(1.08);
+}
+
+.pl-loop-btn {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--grey-mid);
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 9px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+
+.pl-loop-btn:hover {
+  color: var(--black);
+  border-color: var(--grey-mid);
+}
+
+.pl-loop-btn--active {
+  color: var(--blue);
+  border-color: rgba(79,168,255,0.5);
+  background: rgba(79,168,255,0.08);
 }
 
 /* ── Track list body ── */
@@ -160,6 +337,16 @@
   letter-spacing: 0.04em;
   color: var(--black);
   text-transform: uppercase;
+}
+
+.pl-main-title--link {
+  cursor: pointer;
+  transition: color 0.15s, letter-spacing 0.2s;
+}
+
+.pl-main-title--link:hover {
+  color: var(--blue);
+  letter-spacing: 0.10em;
 }
 
 /* Track rows */
@@ -254,20 +441,3 @@
   color: var(--black);
 }
 
-.pl-stop-btn {
-  font-family: var(--font-mono);
-  font-size: 8px;
-  letter-spacing: 0.15em;
-  color: var(--grey-mid);
-  background: none;
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  padding: 4px 8px;
-  cursor: pointer;
-  transition: color 0.15s, border-color 0.15s;
-}
-
-.pl-stop-btn:hover {
-  color: var(--black);
-  border-color: var(--grey-mid);
-}

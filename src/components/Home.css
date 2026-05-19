@@ -152,13 +152,16 @@
   grid-template-columns: repeat(3, 1fr);
   grid-template-rows: repeat(3, 1fr);
   gap: 0;
-  pointer-events: none;
   position: relative;
 }
 
-/* Each grid child gets a subtle border */
-.home-right > * {
+/* Restore pointer-events for all descendants */
+.home-right * {
   pointer-events: auto;
+}
+
+/* Subtle border only on direct grid children */
+.home-right > * {
   border: 1px solid rgba(0,0,0,0.06);
   box-sizing: border-box;
 }
@@ -181,6 +184,7 @@
   grid-column: 2 / 3;
   grid-row: 1 / 3;
   position: relative;
+  z-index: 2;
   top: auto;
   right: auto;
   width: auto;
@@ -227,6 +231,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.scattered-audiobars {
+  grid-column: 1 / -1;
+  width: 100%;
+  margin-top: clamp(12px, 3vw, 32px);
+  padding: 0 4px;
+  box-sizing: border-box;
 }
 
 /* "VIEW PROJECTS" */
