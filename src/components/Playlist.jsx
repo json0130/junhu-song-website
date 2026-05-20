@@ -1,198 +1,39 @@
-import { useState, useRef, useEffect } from 'react';
+import { useEffect } from 'react';
 import { motion, useAnimation } from 'framer-motion';
 import { TRACKS } from '../data/tracks';
+import { PALETTE, conicGrad, DEFAULT_DISC } from '../data/palette';
 import AudioBars from './AudioBars';
+import { useAudio } from '../context/AudioContext';
 import './Playlist.css';
 
-export default function Playlist({ onAnalyserReady, onNavigate }) {
-  const [activeId,  setActiveId]  = useState(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isLooping, setIsLooping] = useState(false);
-  const [progress,  setProgress]  = useState(0);   // 0–1
-  const [duration,  setDuration]  = useState(0);
+const fmt = (s) => {
+  if (!s || !isFinite(s)) return '0:00';
+  return `${Math.floor(s / 60)}:${Math.floor(s % 60).toString().padStart(2, '0')}`;
+};
 
-  const ctxRef       = useRef(null);
-  const audioRef     = useRef(null);
-  const sourceRef    = useRef(null);
-  const analyserRef  = useRef(null);
-  const activeIdRef  = useRef(null);
-  const isPlayingRef = useRef(false);
-  const isLoopingRef = useRef(false);
-  const rafRef       = useRef(null);
+export default function Playlist({ onNavigate }) {
+  const {
+    activeId, isPlaying, isLooping, progress, duration, analyser,
+    playTrack, handlePlayPause, handlePrev, handleNext, toggleLoop, handleSeek,
+  } = useAudio();
+
   const spinControls = useAnimation();
 
-  const initAudio = () => {
-    if (ctxRef.current) return;
-    const AudioCtx = window.AudioContext || (window).webkitAudioContext;
-    const ctx      = new AudioCtx();
-    const analyser = ctx.createAnalyser();
-    analyser.fftSize = 256;
-    analyser.connect(ctx.destination);
-    ctxRef.current      = ctx;
-    analyserRef.current = analyser;
-    onAnalyserReady?.(analyser);
-  };
-
-  const startSpin = () => {
-    spinControls.start({
-      rotate: [null, -3600],
-      transition: { duration: 20, ease: 'linear', repeat: Infinity },
-    });
-  };
-  const stopSpin = () => spinControls.stop();
-
-  const startProgressTick = () => {
-    const tick = () => {
-      const a = audioRef.current;
-      if (a && a.duration) {
-        setProgress(a.currentTime / a.duration);
-        setDuration(a.duration);
-      }
-      rafRef.current = requestAnimationFrame(tick);
-    };
-    cancelAnimationFrame(rafRef.current);
-    rafRef.current = requestAnimationFrame(tick);
-  };
-
-  const stopProgressTick = () => {
-    cancelAnimationFrame(rafRef.current);
-    rafRef.current = null;
-  };
-
-  const tearDown = () => {
-    stopProgressTick();
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.onended = null;
-      audioRef.current = null;
+  useEffect(() => {
+    if (isPlaying) {
+      spinControls.start({
+        rotate: [null, -3600],
+        transition: { duration: 20, ease: 'linear', repeat: Infinity },
+      });
+    } else {
+      spinControls.stop();
     }
-    if (sourceRef.current) {
-      try { sourceRef.current.disconnect(); } catch (_) {}
-      sourceRef.current = null;
-    }
-    setProgress(0);
-    setDuration(0);
-  };
+  }, [isPlaying]);
 
-  const playTrack = (track) => {
-    initAudio();
-    const ctx      = ctxRef.current;
-    const analyser = analyserRef.current;
-
-    // Same track while playing → pause
-    if (activeIdRef.current === track.id && isPlayingRef.current) {
-      audioRef.current.pause();
-      isPlayingRef.current = false;
-      setIsPlaying(false);
-      stopSpin();
-      stopProgressTick();
-      return;
-    }
-
-    // Same track while paused → resume
-    if (activeIdRef.current === track.id && !isPlayingRef.current && audioRef.current) {
-      if (ctx.state === 'suspended') ctx.resume();
-      audioRef.current.play();
-      isPlayingRef.current = true;
-      setIsPlaying(true);
-      startSpin();
-      startProgressTick();
-      return;
-    }
-
-    // New track
-    tearDown();
-
-    const audio = new Audio('/music/' + track.file);
-    audio.crossOrigin = 'anonymous';
-    audioRef.current = audio;
-
-    const src = ctx.createMediaElementSource(audio);
-    src.connect(analyser);
-    sourceRef.current = src;
-
-    audio.onended = () => {
-      stopSpin();
-      stopProgressTick();
-      setProgress(0);
-      // Loop playlist: advance to next track, wrap around
-      if (isLoopingRef.current) {
-        const currentIdx = TRACKS.findIndex(t => t.id === activeIdRef.current);
-        const nextIdx = currentIdx >= TRACKS.length - 1 ? 0 : currentIdx + 1;
-        playTrack(TRACKS[nextIdx]);
-      } else {
-        isPlayingRef.current = false;
-        activeIdRef.current  = null;
-        setIsPlaying(false);
-        setActiveId(null);
-      }
-    };
-
-    if (ctx.state === 'suspended') ctx.resume();
-    audio.play();
-    startProgressTick();
-
-    activeIdRef.current  = track.id;
-    isPlayingRef.current = true;
-    setActiveId(track.id);
-    setIsPlaying(true);
-    startSpin();
-  };
-
-  const handlePlayPause = () => {
-    if (TRACKS.length === 0) return;
-    const current = TRACKS.find(t => t.id === activeIdRef.current) || TRACKS[0];
-    playTrack(current);
-  };
-
-  const handlePrev = () => {
-    if (TRACKS.length === 0) return;
-    const idx = TRACKS.findIndex(t => t.id === activeIdRef.current);
-    const prevIdx = idx <= 0 ? TRACKS.length - 1 : idx - 1;
-    playTrack(TRACKS[prevIdx]);
-  };
-
-  const handleNext = () => {
-    if (TRACKS.length === 0) return;
-    const idx = TRACKS.findIndex(t => t.id === activeIdRef.current);
-    const nextIdx = idx === -1 || idx >= TRACKS.length - 1 ? 0 : idx + 1;
-    playTrack(TRACKS[nextIdx]);
-  };
-
-  const handleStop = () => {
-    tearDown();
-    activeIdRef.current  = null;
-    isPlayingRef.current = false;
-    setIsPlaying(false);
-    setActiveId(null);
-    stopSpin();
-  };
-
-  const toggleLoop = () => {
-    const next = !isLoopingRef.current;
-    isLoopingRef.current = next;
-    if (audioRef.current) audioRef.current.loop = next;
-    setIsLooping(next);
-  };
-
-  const handleSeek = (e) => {
-    const a = audioRef.current;
-    if (!a || !a.duration) return;
-    const val = parseFloat(e.target.value);
-    a.currentTime = val * a.duration;
-    setProgress(val);
-  };
-
-  const fmt = (s) => {
-    if (!s || !isFinite(s)) return '0:00';
-    const m = Math.floor(s / 60);
-    const sec = Math.floor(s % 60).toString().padStart(2, '0');
-    return `${m}:${sec}`;
-  };
-
-  useEffect(() => () => tearDown(), []);
-
-  const activeTrack = TRACKS.find(t => t.id === activeId);
+  const activeTrack   = TRACKS.find(t => t.id === activeId);
+  const activePalette = activeId != null ? PALETTE[(activeId - 1) % PALETTE.length] : null;
+  const discBg        = activePalette ? conicGrad(activePalette.disc) : DEFAULT_DISC;
+  const accentColor   = activePalette?.disc[2] ?? '#4FA8FF';
 
   return (
     <div className="pl-wrap">
@@ -202,6 +43,7 @@ export default function Playlist({ onAnalyserReady, onNavigate }) {
           className="pl-disc"
           animate={spinControls}
           initial={{ rotate: 0 }}
+          style={{ background: discBg }}
         >
           <div className="pl-disc-rings" />
           <div className="pl-disc-label">
@@ -236,7 +78,6 @@ export default function Playlist({ onAnalyserReady, onNavigate }) {
           })}
         </div>
 
-        {/* Bottom info */}
         <div className="pl-info-row">
           <div className="pl-track-info">
             {activeTrack ? (
@@ -256,7 +97,6 @@ export default function Playlist({ onAnalyserReady, onNavigate }) {
 
       {/* ── Transport + seek ── */}
       <div className="pl-controls">
-        {/* Seek bar */}
         <div className="pl-seek-row">
           <span className="pl-time">{fmt(progress * duration)}</span>
           <input
@@ -266,12 +106,11 @@ export default function Playlist({ onAnalyserReady, onNavigate }) {
             max={1}
             step={0.001}
             value={progress}
-            onChange={handleSeek}
+            onChange={(e) => handleSeek(parseFloat(e.target.value))}
           />
           <span className="pl-time">{fmt(duration)}</span>
         </div>
 
-        {/* Buttons */}
         <div className="pl-transport">
           <button className="pl-nav-btn" onClick={handlePrev} aria-label="Previous">◀◀</button>
           <button className="pl-play-btn" onClick={handlePlayPause} aria-label={isPlaying ? 'Pause' : 'Play'}>
@@ -281,8 +120,7 @@ export default function Playlist({ onAnalyserReady, onNavigate }) {
           <button className={`pl-loop-btn ${isLooping ? 'pl-loop-btn--active' : ''}`} onClick={toggleLoop} aria-label="Loop">⟳</button>
         </div>
 
-        {/* Visualiser */}
-        <AudioBars analyser={analyserRef.current} isPlaying={isPlaying} />
+        <AudioBars analyser={analyser} isPlaying={isPlaying} accentColor={accentColor} />
       </div>
     </div>
   );

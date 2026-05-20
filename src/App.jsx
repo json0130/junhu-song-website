@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { AudioProvider } from './context/AudioContext';
 import './index.css';
 
 import FolderNav from './components/FolderNav';
@@ -101,6 +102,7 @@ export default function App() {
   const PageComponent = PAGES[displayPage];
 
   return (
+    <AudioProvider>
     <div style={{ position: 'relative', width: '100vw', minHeight: '100vh', overflow: 'hidden' }}>
       <AnimatePresence mode="wait">
         <motion.div
@@ -118,5 +120,6 @@ export default function App() {
       <FolderNav activePage={activePage} onNavigate={navigate} />
       <FolderSweep isAnimating={isSweeping} />
     </div>
+    </AudioProvider>
   );
 }
