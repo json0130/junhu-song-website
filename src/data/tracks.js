@@ -4,7 +4,8 @@
 
 export const TRACKS = [
   { id: 1, title: 'DAISIES', artist: 'Unknown', file: 'DAISIES.mp3' },
-  { id: 2, title: 'Justin Bieber   YUKON', artist: 'Unknown', file: 'Justin Bieber - YUKON.mp3' },
-  { id: 3, title: 'Lauv   I Like Me Better [Official Audio]', artist: 'Unknown', file: 'Lauv - I Like Me Better [Official Audio].mp3' },
-  { id: 4, title: 'Lauv   Paris In The Rain [Official Video]', artist: 'Unknown', file: 'Lauv - Paris in the Rain [Official Video].mp3' }
+  { id: 2, title: 'Justin Bieber   Love Yourself (Lyrics)', artist: 'Unknown', file: 'Justin Bieber - Love Yourself (Lyrics).mp3' },
+  { id: 3, title: 'Justin Bieber   YUKON', artist: 'Unknown', file: 'Justin Bieber - YUKON.mp3' },
+  { id: 4, title: 'Lauv   I Like Me Better [Official Audio]', artist: 'Unknown', file: 'Lauv - I Like Me Better [Official Audio].mp3' },
+  { id: 5, title: 'Lauv   Paris In The Rain [Official Video]', artist: 'Unknown', file: 'Lauv - Paris in the Rain [Official Video].mp3' }
 ];

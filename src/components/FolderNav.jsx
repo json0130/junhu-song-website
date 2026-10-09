@@ -15,7 +15,10 @@ const EAR_TOPS = [8, 22, 36, 50, 69, 78];
 const STACK_OFFSETS = [0, 21, 7, 35, 14, 28];
 const STACK_Z = [6, 3, 5, 1, 4, 2];
 
-function FolderTab({ tab, i, isActive, isHovered, isExiting, onMouseEnter, onMouseLeave, onClick }) {
+// Purely visual: it rotates and re-stacks on hover, so it must never be the hover target
+// itself (a moving target slides out from under the cursor and makes the hover flicker).
+// Hovering and clicking are handled by the static FolderHit layer below.
+function FolderTab({ tab, i, isActive, isHovered, isExiting }) {
   const [scope, animate] = useAnimate();
 
   // Fire slide-out-and-back when this tab becomes active
@@ -31,10 +34,7 @@ function FolderTab({ tab, i, isActive, isHovered, isExiting, onMouseEnter, onMou
     <motion.div
       ref={scope}
       className={`folder-tab ${isActive ? 'active' : ''} ${isExiting ? 'exiting' : ''}`}
-      style={{ zIndex, right: STACK_OFFSETS[i] }}
-      onMouseEnter={onMouseEnter}
-      onMouseLeave={onMouseLeave}
-      onClick={onClick}
+      style={{ zIndex, right: `${STACK_OFFSETS[i] / 16}rem` }}
       initial={{ x: 90 }}
       animate={{
         x: isExiting ? 300 : 0,
@@ -52,6 +52,32 @@ function FolderTab({ tab, i, isActive, isHovered, isExiting, onMouseEnter, onMou
         </div>
       </div>
     </motion.div>
+  );
+}
+
+// Static, never-transformed hit area for one tab: the full-height spine strip plus a
+// ghost of the ear at its resting position. Stacked with the same z-order as the tabs.
+function FolderHit({ tab, i, isActive, onMouseEnter, onMouseLeave, onClick }) {
+  return (
+    <div
+      className="folder-hit"
+      role="button"
+      tabIndex={0}
+      aria-label={`Go to ${tab.label.toLowerCase()}`}
+      aria-current={isActive ? 'page' : undefined}
+      style={{ right: `${STACK_OFFSETS[i] / 16}rem`, zIndex: STACK_Z[i] }}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+      onFocus={onMouseEnter}
+      onBlur={onMouseLeave}
+      onClick={onClick}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } }}
+    >
+      <span className="f-hit-ear" style={{ top: `${EAR_TOPS[i]}%` }} aria-hidden="true">
+        <span className="f-ear-label">{tab.label}</span>
+        {isActive && <span className="f-ear-dot" />}
+      </span>
+    </div>
   );
 }
 
@@ -75,11 +101,21 @@ export default function FolderNav({ activePage, onNavigate }) {
           isActive={tab.id === activePage}
           isHovered={hoveredTab === tab.id}
           isExiting={exiting === tab.id}
-          onMouseEnter={() => setHoveredTab(tab.id)}
-          onMouseLeave={() => setHoveredTab(null)}
-          onClick={() => handleClick(tab.id)}
         />
       ))}
+      <div className="folder-hits">
+        {TABS.map((tab, i) => (
+          <FolderHit
+            key={tab.id}
+            tab={tab}
+            i={i}
+            isActive={tab.id === activePage}
+            onMouseEnter={() => setHoveredTab(tab.id)}
+            onMouseLeave={() => setHoveredTab(null)}
+            onClick={() => handleClick(tab.id)}
+          />
+        ))}
+      </div>
     </div>
   );
 }

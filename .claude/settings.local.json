@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "PowerShell(Get-Process | Where-Object { $_.ProcessName -match 'claude' } | Select-Object ProcessName, Path -ErrorAction SilentlyContinue)"
     ]
   }
 }

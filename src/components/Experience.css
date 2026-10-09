@@ -5,34 +5,34 @@
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 40px;
+  gap: 2.5rem;
 }
 
-.exp-header { max-width: 900px; }
+.exp-header { max-width: 56.25rem; }
 
 .exp-legend {
   display: flex;
   flex-wrap: wrap;
-  gap: 16px;
-  margin-top: 12px;
+  gap: 1rem;
+  margin-top: 0.75rem;
 }
 
 .legend-item {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 0.375rem;
 }
 
 .legend-dot {
-  width: 8px;
-  height: 8px;
+  width: 0.5rem;
+  height: 0.5rem;
   border-radius: 50%;
   flex-shrink: 0;
 }
 
 .legend-label {
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: max(9px, 0.5625rem);
   letter-spacing: 0.12em;
   color: var(--grey-mid);
   text-transform: uppercase;
@@ -41,23 +41,29 @@
 /* ─── Scrollable container ─── */
 .exp-scroll {
   width: 100%;
-  height: 75vh;
-  max-height: 75vh;
-  overflow-y: auto;
-  overflow-x: auto;
-  scrollbar-width: thin;
-  scrollbar-color: var(--border) transparent;
+  height: 64vh;
+  min-height: 22rem;
+  overflow: hidden;            /* the camera, not scrolling, moves the canvas */
   position: relative;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: rgba(var(--line-rgb), 0.015);
 }
-
-.exp-scroll::-webkit-scrollbar { width: 4px; height: 4px; }
-.exp-scroll::-webkit-scrollbar-track { background: transparent; }
-.exp-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
 /* ─── Timeline canvas — fixed pixel width matching SVG_W ─── */
 .exp-vtimeline {
-  position: relative;
+  position: absolute;
+  top: 0;
+  left: 0;
+  will-change: transform;
   /* width set inline from SVG_W constant */
+}
+
+/* The A4 sheet the timeline is drawn on */
+.exp-page-sheet {
+  fill: rgba(var(--line-rgb), 0.025);
+  stroke: rgba(var(--line-rgb), 0.16);
+  stroke-width: 2;
 }
 
 /* SVG spine behind everything */
@@ -76,7 +82,7 @@
   font-family: var(--font-display);
   font-size: 56px;
   font-weight: 900;
-  color: var(--black);
+  color: var(--ink);
   opacity: 0.07;
   pointer-events: none;
   z-index: 0;
@@ -135,7 +141,7 @@
   font-family: var(--font-display);
   font-size: 17px;
   font-weight: 700;
-  color: var(--black);
+  color: var(--ink);
   line-height: 1.3;
 }
 
@@ -189,78 +195,97 @@
   top: 2px;
 }
 
+/* ─── Controls row ─── */
+.exp-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: -1rem;
+}
+.exp-controls .exp-zoom-out-btn { margin: 0 0 0 auto; align-self: auto; }
+.exp-zoom-out-btn:disabled { opacity: 0.3; cursor: default; }
+
 /* ─── Zoom-out button ─── */
 .exp-zoom-out-btn {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.5rem;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: max(9px, 0.625rem);
   letter-spacing: 0.18em;
   color: var(--grey-mid);
-  background: var(--white);
+  background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 100px;
-  padding: 7px 16px;
+  border-radius: 6.25rem;
+  padding: 0.4375rem 1rem;
   cursor: pointer;
   align-self: flex-start;
-  margin-bottom: 8px;
+  margin-bottom: 0.5rem;
   transition: color 0.2s, border-color 0.2s;
 }
-.exp-zoom-out-btn:hover { color: var(--black); border-color: var(--grey-mid); }
+.exp-zoom-out-btn:hover { color: var(--ink); border-color: var(--grey-mid); }
 
 /* ─── Prev / Next arrows ─── */
 .exp-nav-arrows {
   display: flex;
   align-items: center;
-  gap: 16px;
-  margin-bottom: 12px;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
 }
 
 .exp-arrow-btn {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 0.4375rem;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: max(9px, 0.625rem);
   letter-spacing: 0.18em;
   color: var(--grey-mid);
   background: transparent;
   border: 1px solid var(--border);
-  border-radius: 100px;
-  padding: 7px 14px;
+  border-radius: 6.25rem;
+  padding: 0.4375rem 0.875rem;
   cursor: pointer;
   transition: color 0.2s, border-color 0.2s, background 0.2s;
 }
-.exp-arrow-btn:hover:not(:disabled) { color: var(--black); border-color: var(--grey-mid); background: var(--white); }
+.exp-arrow-btn:hover:not(:disabled) { color: var(--ink); border-color: var(--grey-mid); background: var(--surface); }
 .exp-arrow-btn:disabled { opacity: 0.3; cursor: default; }
 
 .exp-arrow-index {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: max(9px, 0.6875rem);
   letter-spacing: 0.12em;
   color: var(--grey-mid);
-  min-width: 60px;
+  min-width: 3.75rem;
   text-align: center;
+}
+
+/* keep the canvas and its controls clear of the right-edge file nav */
+@media (min-width: 769px) {
+  #root .exp-page { padding-right: var(--nav-safe); }
 }
 
 /* ─── Tablet ─── */
 @media (max-width: 1200px) {
-  .exp-page { padding: 60px 40px 80px; }
+  .exp-page { padding: 3.75rem 2.5rem 5rem; }
 }
 
 /* ─── Mobile ─── */
 @media (max-width: 768px) {
-  .exp-page { padding: 60px 32px 120px; }
-  .exp-scroll { max-height: none; overflow: visible; }
-  .exp-vtimeline { width: 100%; height: auto !important; }
+  .exp-page { padding: 3.75rem 2rem 7.5rem; }
+  .exp-controls { display: none; }
+  .exp-scroll { height: auto; min-height: 0; overflow: visible !important; border: none; background: none; }
+  /* the canvas is JS-sized and scaled; on phones the cards just stack, so drop both */
+  .exp-vtimeline { position: relative !important; width: 100% !important; height: auto !important; transform: none !important; }
+  .exp-vnode { position: static !important; height: auto !important; }
   .exp-vsvg { display: none; }
   .exp-vyear { display: none; }
   .exp-vdot { display: none; }
   .exp-vcard {
     position: static !important;
     width: 100% !important;
-    margin-bottom: 16px;
+    margin-bottom: 1rem;
     transform: none !important;
   }
 }

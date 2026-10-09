@@ -1,0 +1,115 @@
+/* 3D object stage — headphones / CD / speaker, with a now-playing bar underneath.
+   Fills the Home right-hand column. */
+.st3d {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  --hp-energy: 0;
+}
+
+.st3d-stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  cursor: grab;
+}
+.st3d-stage.is-hot { cursor: pointer; }
+.st3d-stage.is-dragging { cursor: grabbing; }
+
+.st3d-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: pan-y;
+  outline: none;
+}
+
+/* Soft halo that swells with the music */
+.st3d-glow {
+  position: absolute;
+  inset: 8% 6%;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--blue-glow) 0%, transparent 68%);
+  opacity: calc(0.55 + var(--hp-energy) * 1.1);
+  transform: scale(calc(1 + var(--hp-energy) * 0.12));
+  pointer-events: none;
+}
+
+.st3d-hint {
+  position: absolute;
+  top: 0.75rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.st3d-dot {
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 50%;
+  background: var(--blue);
+  box-shadow: 0 0 0.5rem var(--blue);
+}
+
+/* ── Arrows beside the object ── */
+.st3d-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3rem;
+  height: 3rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--chip-bg);
+  color: var(--grey-dark);
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  transition: color 0.2s, border-color 0.2s, background 0.2s, transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  z-index: 2;
+}
+.st3d-arrow--prev { left: 0.5rem; }
+.st3d-arrow--next { right: 0.5rem; }
+.st3d-arrow:hover { color: var(--ink); border-color: var(--blue); background: var(--chip-bg-hover); }
+.st3d-arrow--prev:hover { transform: translateY(-50%) translateX(-0.2rem); }
+.st3d-arrow--next:hover { transform: translateY(-50%) translateX(0.2rem); }
+.st3d-arrow:focus-visible, .st3d-pip:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.st3d-arrow svg { width: 1.125rem; height: 1.125rem; }
+
+.st3d-dots {
+  position: absolute;
+  bottom: 0.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 0.5rem;
+  z-index: 2;
+}
+.st3d-pip {
+  width: 0.5rem;
+  height: 0.5rem;
+  padding: 0;
+  border: none;
+  border-radius: 100px;
+  background: var(--grey-light);
+  cursor: pointer;
+  transition: width 0.3s ease, background 0.3s ease;
+}
+.st3d-pip.is-active { width: 1.5rem; background: var(--blue); }
+
+.st3d[data-fallback='true'] .st3d-canvas,
+.st3d[data-fallback='true'] .st3d-glow { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .st3d-glow { transform: none; }
+}

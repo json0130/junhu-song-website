@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect } from 'react';
-import { motion, useInView } from 'framer-motion';
+import { useState, useRef, useEffect, useLayoutEffect } from 'react';
+import { motion, animate, useMotionValue, useTransform } from 'framer-motion';
 import './Experience.css';
 
 const TIMELINE = [
@@ -144,11 +144,11 @@ const TIMELINE = [
   },
   {
     year: 2026,
-    role: 'Master of Engineering (Robotics & AI)',
+    role: 'PhD (Robotics & AI)',
     org: 'University of Auckland',
-    period: 'Mar 2026 – Nov 2026',
+    period: 'Mar 2026 – Present',
     type: 'EDUCATION',
-    items: ['Pursuing specialisation in Robotics & AI at the University of Auckland', 'Focus on human-robot interaction and advanced ML systems'],
+    items: ['Pursuing a PhD in Robotics & AI at the University of Auckland', 'Focus on human-robot interaction and advanced ML systems'],
   },
 ];
 
@@ -163,235 +163,168 @@ const TYPE_COLORS = {
   COMPETITION: '#FF6B9D',
 };
 
+
 // ─── Layout ────────────────────────────────────────────────────────
-// The spine passes THROUGH each card — the card sits astride the path.
-// Each node: spine enters the card from one edge, exits the other edge.
-// Entry point = left edge of card (or right edge for left-side cards).
-// Exit point  = right edge of card (or left edge for left-side cards).
-// The dot is placed at the card's entry edge on the spine.
+// The whole timeline is one A4-portrait sheet (1 : √2). The cards snake down it in three
+// columns, and a smooth curve winds through them. A camera pans/zooms over the sheet:
+// PREV/NEXT glide the camera straight (and gently) from card to card while a glowing cursor
+// runs along the curve in step with it, then the next card opens.
 
-const CARD_W  = 440;  // doubled from 220
-const CARD_H  = 240;  // doubled — used for spine routing midpoint
-const SVG_W   = 2400; // extra wide for exaggerated spread
-const STEP_Y  = 300;  // vertical gap between cards
-const START_Y = 80;
+const CARD_W  = 440;
+const CARD_H  = 240;                      // nominal height — used for routing
+const PAGE_W  = 2400;
+const PAGE_H  = Math.round(PAGE_W * Math.SQRT2);   // A4 portrait
+const PAD_X   = 140;                      // breathing room around a card when fitting the viewport
 
-// LEFT edge of each card — organic, non-alternating placement across a 2400px canvas.
-// Max cardX = SVG_W - CARD_W = 1960. Exaggerated swings for dramatic animations.
-const CARD_LEFTS = [
-  20,    // 0  — far left (start)
-  1400,  // 1  — huge jump right
-  800,   // 2  — drift left (mid-right)
-  1700,  // 3  — far right
-  1500,  // 4  — nudge left (still far right)
-  100,   // 5  — giant swing left
-  500,   // 6  — drift right (mid-left)
-  1850,  // 7  — extreme right
-  50,    // 8  — far left
-  950,   // 9  — mid
-  1600,  // 10 — far right
-  250,   // 11 — left-ish
-  1100,  // 12 — right-ish
-  30,    // 13 — far left
-  1900,  // 14 — extreme right (end)
+const COL_X  = [560, 1200, 1840];         // card-centre columns
+const ROW_Y0 = 520;                       // first row
+const ROW_DY = 575;                       // row spacing (5 rows fill the sheet)
+// Small offsets so the snake isn't a rigid grid
+const WOBBLE = [
+  [-30,  0], [ 40, -70], [-20,  50],
+  [ 30, 60], [-50, -40], [ 20,  80],
+  [-40, -30], [ 50,  70], [-20, -60],
+  [ 30,  40], [-30, -80], [ 40,  30],
+  [-50, -50], [ 30,  60], [-10, -20],
 ];
 
-// Build nodes — spine enters card at left or right edge depending on approach direction
 const NODES = TIMELINE.map((e, i) => {
-  const cardX    = CARD_LEFTS[i];
-  const cardY    = START_Y + i * STEP_Y - CARD_H / 2;
-  const dotY     = cardY + CARD_H / 2; // spine crosses card at vertical midpoint
-  const showYear = i === 0 || TIMELINE[i - 1].year !== e.year;
-
-  // Determine which side the spine approaches from
-  // If next card is to the right of this one → spine exits right → entry from left
-  // We'll compute entry/exit x as left and right edges of card
-  const entryX = cardX;           // spine enters card at left edge
-  const exitX  = cardX + CARD_W; // spine exits card at right edge
-
-  return { ...e, cardX, cardY, dotY, entryX, exitX, dotX: entryX, showYear };
+  const row = Math.floor(i / 3);
+  const k = i % 3;
+  const col = row % 2 === 0 ? k : 2 - k;               // boustrophedon: left→right, then right→left
+  const cx = COL_X[col] + WOBBLE[i][0];
+  const cy = ROW_Y0 + row * ROW_DY + WOBBLE[i][1];
+  return {
+    ...e,
+    cx, cy,
+    cardX: cx - CARD_W / 2,
+    cardY: cy - CARD_H / 2,
+    showYear: i === 0 || TIMELINE[i - 1].year !== e.year,
+  };
 });
+const N = NODES.length;
 
-// Build spine waypoints — path goes through each card (entry → exit),
-// then connects to next card's entry with L-shaped segments
-const SPINE_PTS = (() => {
-  const pts = [];
-  // Start above the first card
-  pts.push([NODES[0].entryX, START_Y - 30]);
-
-  NODES.forEach((n, i) => {
-    const prevExit = i === 0 ? [n.entryX, START_Y - 30] : [NODES[i - 1].exitX, NODES[i - 1].dotY];
-
-    // Connect from previous exit to this card's entry with L-shape:
-    // horizontal to entry X, then vertical to dotY
-    if (prevExit[0] !== n.entryX) {
-      // Drop vertically from prev exit to this dotY, then go horizontal
-      pts.push([prevExit[0], n.dotY]);  // vertical segment
-      pts.push([n.entryX, n.dotY]);     // horizontal to entry
-    } else {
-      pts.push([n.entryX, n.dotY]);
-    }
-
-    // Pass through the card: entry → exit (horizontal line through card)
-    pts.push([n.exitX, n.dotY]);
-  });
-
-  // Tail below last card
-  pts.push([NODES[NODES.length - 1].exitX, NODES[NODES.length - 1].dotY + 60]);
-  return pts;
+// Catmull-Rom → cubic Béziers through the card centres, with a short lead-in and lead-out
+const ANCHORS = (() => {
+  const a = NODES.map(n => [n.cx, n.cy]);
+  const head = [a[0][0] + (a[0][0] - a[1][0]) * 0.35, a[0][1] + (a[0][1] - a[1][1]) * 0.35];
+  const tail = [a[N - 1][0] + (a[N - 1][0] - a[N - 2][0]) * 0.35, a[N - 1][1] + (a[N - 1][1] - a[N - 2][1]) * 0.35];
+  return [head, ...a, tail];
 })();
 
-const TOTAL_H = NODES[NODES.length - 1].dotY + 220;
-
-function buildSpinePath() {
-  return SPINE_PTS.map(([x, y], i) => `${i === 0 ? 'M' : 'L'} ${x} ${y}`).join(' ');
+const CURVES = [];      // [p0, c1, c2, p1] per segment
+for (let i = 0; i < ANCHORS.length - 1; i++) {
+  const p0 = ANCHORS[i], p1 = ANCHORS[i + 1];
+  const pm = ANCHORS[Math.max(i - 1, 0)], pn = ANCHORS[Math.min(i + 2, ANCHORS.length - 1)];
+  CURVES.push([
+    p0,
+    [p0[0] + (p1[0] - pm[0]) / 6, p0[1] + (p1[1] - pm[1]) / 6],
+    [p1[0] - (pn[0] - p0[0]) / 6, p1[1] - (pn[1] - p0[1]) / 6],
+    p1,
+  ]);
 }
+const SPINE_D = `M ${CURVES[0][0][0]} ${CURVES[0][0][1]} ` + CURVES.map(([, c1, c2, p]) => `C ${c1[0]} ${c1[1]} ${c2[0]} ${c2[1]} ${p[0]} ${p[1]}`).join(' ');
 
-// Build a sub-path: same shape as spine but shifted by dx horizontally and dy vertically
-function buildSubPath(dx = 0, dy = 12) {
-  return SPINE_PTS.map(([x, y], i) => `${i === 0 ? 'M' : 'L'} ${x + dx} ${y + dy}`).join(' ');
-}
-
-// All decorative parallel lines — each with distinct offset, color, width, dash
-const SUB_LINES = [
-  // offset [dx, dy], stroke, width, dasharray, delay, opacity
-  { dx:  0,  dy:  16, stroke: 'rgba(79,168,255,0.18)',  width: 1,   dash: '6 10',  delay: 0.15, opacity: 1   },
-  { dx:  0,  dy: -14, stroke: 'rgba(79,168,255,0.10)',  width: 1,   dash: '3 12',  delay: 0.25, opacity: 1   },
-  { dx:  8,  dy:  28, stroke: 'rgba(167,139,250,0.14)', width: 2,   dash: '8 6',   delay: 0.35, opacity: 1   },
-  { dx: -8,  dy: -26, stroke: 'rgba(167,139,250,0.09)', width: 1,   dash: '2 14',  delay: 0.45, opacity: 1   },
-  { dx:  0,  dy:  44, stroke: 'rgba(255,107,157,0.10)', width: 1.5, dash: '5 8',   delay: 0.55, opacity: 1   },
-  { dx:  0,  dy: -42, stroke: 'rgba(255,107,157,0.07)', width: 1,   dash: '4 16',  delay: 0.65, opacity: 1   },
-  { dx: 16,  dy:  60, stroke: 'rgba(168,230,163,0.12)', width: 3,   dash: '10 5',  delay: 0.75, opacity: 1   },
-  { dx:-16,  dy: -58, stroke: 'rgba(168,230,163,0.07)', width: 1,   dash: '1 18',  delay: 0.85, opacity: 1   },
-  { dx:  0,  dy:  80, stroke: 'rgba(255,217,61,0.09)',  width: 2,   dash: '7 9',   delay: 0.95, opacity: 1   },
-  { dx:  0,  dy: -78, stroke: 'rgba(255,217,61,0.06)',  width: 1,   dash: '3 20',  delay: 1.05, opacity: 1   },
-];
-
-// Tick marks perpendicular to the spine at each node's dot position
-function buildTicks() {
-  return NODES.map(n => ({
-    x1: n.entryX, y1: n.dotY - 10,
-    x2: n.entryX, y2: n.dotY + 10,
-  }));
-}
-
-// Short branch stubs jutting off the horizontal segments (above and below)
-function buildStubs() {
-  const stubs = [];
-  NODES.forEach((n) => {
-    // Mid-point of the horizontal segment through the card
-    const midX = n.cardX + CARD_W / 2;
-    const y    = n.dotY;
-    stubs.push({ x1: midX, y1: y - 20, x2: midX, y2: y - 8 });   // stub above
-    stubs.push({ x1: midX, y1: y + 8,  x2: midX, y2: y + 20 });   // stub below
-    // Tiny tick at the exit point
-    stubs.push({ x1: n.exitX, y1: y - 6, x2: n.exitX, y2: y + 6 });
+// Sample the curve so we can ask "where is arc-length s?"
+const SAMPLES = [];     // { x, y, s }
+const NODE_S = [];      // arc length at each card centre
+{
+  const STEPS = 60;
+  let acc = 0;
+  let prev = null;
+  CURVES.forEach(([p0, c1, c2, p1], seg) => {
+    if (seg >= 1 && seg <= N) NODE_S[seg - 1] = acc;      // segment `seg` starts at anchor `seg` = card `seg-1`
+    for (let k = 0; k < STEPS; k++) {
+      const t = k / STEPS, u = 1 - t;
+      const x = u * u * u * p0[0] + 3 * u * u * t * c1[0] + 3 * u * t * t * c2[0] + t * t * t * p1[0];
+      const y = u * u * u * p0[1] + 3 * u * u * t * c1[1] + 3 * u * t * t * c2[1] + t * t * t * p1[1];
+      if (prev) acc += Math.hypot(x - prev[0], y - prev[1]);
+      SAMPLES.push({ x, y, s: acc });
+      prev = [x, y];
+    }
   });
-  return stubs;
+  const end = CURVES[CURVES.length - 1][3];
+  acc += Math.hypot(end[0] - prev[0], end[1] - prev[1]);
+  SAMPLES.push({ x: end[0], y: end[1], s: acc });
 }
+const SPINE_LEN = SAMPLES[SAMPLES.length - 1].s;
 
-// Grid-ruler marks: small horizontal notches along the left margin
-function buildRulerMarks() {
-  return NODES.map((n, i) => ({
-    x1: 0, y1: n.dotY,
-    x2: 18, y2: n.dotY,
-    label: String(i + 1).padStart(2, '0'),
-    labelX: 22, labelY: n.dotY + 4,
-  }));
-}
-
-// Get spine waypoints up to and including the exit of node i
-function spineWaypointsUpTo(nodeIdx) {
-  // The exit of node i is the point [NODES[nodeIdx].exitX, NODES[nodeIdx].dotY]
-  const targetX = NODES[nodeIdx].exitX;
-  const targetY = NODES[nodeIdx].dotY;
-  const pts = [];
-  for (const pt of SPINE_PTS) {
-    pts.push(pt);
-    if (pt[0] === targetX && pt[1] === targetY) break;
+function pointAt(s) {
+  const d = Math.min(Math.max(s, 0), SPINE_LEN);
+  let lo = 0, hi = SAMPLES.length - 1;
+  while (hi - lo > 1) {
+    const mid = (lo + hi) >> 1;
+    if (SAMPLES[mid].s <= d) lo = mid; else hi = mid;
   }
-  return pts;
+  const a = SAMPLES[lo], b = SAMPLES[hi];
+  const t = b.s === a.s ? 0 : (d - a.s) / (b.s - a.s);
+  return [a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t];
 }
+
+// Where the curve crosses each card's edge on the way in — that's where the dot sits
+NODES.forEach((n, i) => {
+  let entry = [n.cx, n.cardY];
+  for (let d = 0; d < 500; d += 3) {
+    const [x, y] = pointAt(NODE_S[i] - d);
+    if (Math.abs(x - n.cx) > CARD_W / 2 + 4 || Math.abs(y - n.cy) > CARD_H / 2 + 4) { entry = [x, y]; break; }
+  }
+  n.entry = entry;
+});
+
+// A direction chevron halfway along every connection
+const CHEVRONS = NODES.slice(0, -1).map((_, i) => {
+  const s = (NODE_S[i] + NODE_S[i + 1]) / 2;
+  const [x, y] = pointAt(s);
+  const [x2, y2] = pointAt(s + 4);
+  const [x1, y1] = pointAt(s - 4);
+  return { x, y, deg: (Math.atan2(y2 - y1, x2 - x1) * 180) / Math.PI };
+});
+
+const clamp = (v, lo, hi) => Math.min(Math.max(v, lo), hi);
+const focusScale    = (w)    => clamp(w / 1150, 0.55, 1.15);
+const overviewScale = (w, h) => Math.min(w / PAGE_W, h / PAGE_H, 0.3) * 0.96;
+const isStacked = () => window.matchMedia('(max-width: 768px)').matches;   // phones stack the cards
 
 // ─── Single timeline node ──────────────────────────────────────
-function TimelineNode({ node, i, isActive, onClick, containerRef }) {
-  const ref     = useRef(null);
-  const cardRef = useRef(null);
-  const inView  = useInView(ref, { once: true, margin: '-50px' });
+function TimelineNode({ node, i, isFocus, isCurrent, onClick }) {
   const color = TYPE_COLORS[node.type];
-  // Cards left of center shift left on active, cards right of center shift right
-  const centerX = SVG_W / 2;
-  const activeSideX = isActive ? (node.cardX + CARD_W / 2 < centerX ? -12 : 12) : 0;
-
-  useEffect(() => {
-    if (isActive && cardRef.current && containerRef?.current) {
-      const c   = containerRef.current;
-      const el  = cardRef.current;
-      // Center vertically
-      const topTarget  = el.offsetTop  - c.clientHeight / 2 + (CARD_H / 2);
-      // Center horizontally
-      const leftTarget = el.offsetLeft - c.clientWidth  / 2 + (CARD_W / 2);
-      c.scrollTo({ top: topTarget, left: leftTarget, behavior: 'smooth' });
-    }
-  }, [isActive]);
-
+  const delay = Math.min(i * 0.04, 0.5);
   return (
-    <div ref={ref} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none' }}>
-
-      {/* Entry dot — where spine enters the card */}
+    <div className="exp-vnode">
+      {/* Entry dot — where the route meets the card */}
       <motion.div
         className="exp-vdot"
-        style={{ left: node.entryX, top: node.dotY, background: color, pointerEvents: 'auto' }}
+        style={{ left: node.entry[0], top: node.entry[1], background: color }}
         initial={{ scale: 0, opacity: 0 }}
-        animate={inView ? {
-          scale: isActive ? 2.2 : 1,
+        animate={{
+          scale: isCurrent ? 2.2 : 1,
           opacity: 1,
-          boxShadow: isActive ? `0 0 22px ${color}90` : `0 0 8px ${color}40`,
-        } : { scale: 0, opacity: 0 }}
-        transition={{ delay: i * 0.06, duration: 0.4, ease: [0.34, 1.56, 0.64, 1] }}
+          boxShadow: isCurrent ? `0 0 22px ${color}90` : `0 0 8px ${color}40`,
+        }}
+        transition={{ delay, duration: 0.4, ease: [0.34, 1.56, 0.64, 1] }}
         onClick={onClick}
       />
 
-      {/* Year ghost label */}
       {node.showYear && (
         <motion.div
           className="exp-vyear"
           style={{ top: node.cardY - 54, left: node.cardX }}
           initial={{ opacity: 0, y: 10 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ delay: i * 0.06 + 0.2, duration: 0.5 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: delay + 0.2, duration: 0.5 }}
         >
           {node.year}
         </motion.div>
       )}
 
-      {/* Card — spine passes through it horizontally at dotY */}
       <motion.div
-        ref={cardRef}
-        className={`exp-vcard card ${isActive ? 'exp-vcard-active' : ''}`}
-        style={{
-          left: node.cardX,
-          top: node.cardY,
-          borderColor: isActive ? color : undefined,
-          pointerEvents: 'auto',
-          cursor: 'pointer',
-        }}
+        className={`exp-vcard card ${isFocus ? 'exp-vcard-active' : ''}`}
+        style={{ left: node.cardX, top: node.cardY, borderColor: isFocus ? color : undefined }}
         initial={{ opacity: 0, y: 12 }}
-        animate={inView ? {
-          opacity: 1,
-          x: activeSideX,
-          y: isActive ? -16 : 0,
-          width: isActive ? CARD_W * 1.4 : CARD_W,
-        } : { opacity: 0, y: 12 }}
-        transition={{
-          opacity: { delay: i * 0.06 + 0.35, duration: 0.45, ease: [0.76, 0, 0.24, 1] },
-          x:       { duration: 0.4, ease: [0.34, 1.56, 0.64, 1] },
-          y:       { duration: 0.4, ease: [0.34, 1.56, 0.64, 1] },
-          width:   { duration: 0.4, ease: [0.76, 0, 0.24, 1] },
-        }}
+        animate={{ opacity: 1, y: 0, width: CARD_W }}
+        transition={{ opacity: { delay: delay + 0.2, duration: 0.45 } }}
         onClick={onClick}
       >
-        {/* Header row */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
           <div className="exp-type-badge" style={{ color, background: color + '20', borderColor: color + '50' }}>
             {node.type}
@@ -403,8 +336,7 @@ function TimelineNode({ node, i, isActive, onClick, containerRef }) {
         <div className="htimeline-org">{node.org}</div>
         {node.note && <div className="htimeline-note" style={{ color }}>{node.note}</div>}
 
-        {/* Expanded detail */}
-        {isActive && (
+        {isFocus && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
@@ -424,52 +356,181 @@ function TimelineNode({ node, i, isActive, onClick, containerRef }) {
 
 // ─── Main ──────────────────────────────────────────────────────
 export default function Experience() {
-  const [active, setActive]   = useState(null);
-  const [zoomed, setZoomed]   = useState(false);
-  const containerRef          = useRef(null);
-  const svgRef                = useRef(null);
-  const svgInView             = useInView(svgRef, { once: true });
+  // Open on a random card
+  const [current, setCurrent]       = useState(() => Math.floor(Math.random() * N));
+  const [focus, setFocus]           = useState(null);     // which card is expanded
+  const [overview, setOverview]     = useState(false);
+  const [travelling, setTravelling] = useState(false);
 
-  const spinePath   = buildSpinePath();
-  const subPaths    = SUB_LINES.map(l => buildSubPath(l.dx, l.dy));
-  const ticks       = buildTicks();
-  const stubs       = buildStubs();
-  const rulerMarks  = buildRulerMarks();
+  const viewportRef = useRef(null);
+  const baseRef     = useRef(null);
+  const trailRef    = useRef(null);
+  const cursorRef   = useRef(null);
+  const dashK       = useRef(1);                           // SVG path length ÷ sampled length
+  const anims       = useRef([]);                          // running animations, stopped on unmount
+  const live        = useRef({});                          // latest state for callbacks/listeners
+  live.current = { current, overview, travelling };
 
-  const handleClick = (i) => {
-    const next = active === i ? null : i;
-    setActive(next);
-    if (next !== null) setZoomed(true);
+  // Camera: the world point at the viewport centre + zoom
+  const vw   = useMotionValue(1200);
+  const vh   = useMotionValue(700);
+  const camX = useMotionValue(PAGE_W / 2);
+  const camY = useMotionValue(PAGE_H / 2);
+  const camS = useMotionValue(1);
+  const tx = useTransform(() => vw.get() / 2 - camX.get() * camS.get());
+  const ty = useTransform(() => vh.get() / 2 - camY.get() * camS.get());
+
+  const restPose = (idx, isOverview) => {
+    const w = vw.get(), h = vh.get();
+    if (isOverview) return { x: PAGE_W / 2, y: PAGE_H / 2, s: overviewScale(w, h) };
+    return { x: NODES[idx].cx, y: NODES[idx].cy, s: focusScale(w) };
   };
 
-  const handleZoomOut = () => {
-    setZoomed(false);
-    setActive(null);
+  const setTrail = (s, color) => {
+    const t = trailRef.current;
+    if (!t) return;
+    t.setAttribute('stroke-dasharray', `${s * dashK.current} ${SPINE_LEN * dashK.current + 20}`);
+    if (color) t.setAttribute('stroke', color);
   };
 
-  const goNext = () => {
-    const next = active === null ? 0 : Math.min(active + 1, NODES.length - 1);
-    setActive(next);
-    setZoomed(true);
+  const snapTo = (idx, isOverview) => {
+    const p = restPose(idx, isOverview);
+    camX.set(p.x); camY.set(p.y); camS.set(p.s);
   };
 
-  const goPrev = () => {
-    if (active === null) return;
-    const prev = Math.max(active - 1, 0);
-    setActive(prev);
-    setZoomed(true);
+  const runAnimation = (...controls) => { anims.current.push(...controls); };
+
+  // Measure the viewport before first paint, then keep it in sync
+  useLayoutEffect(() => {
+    const el = viewportRef.current;
+    const measure = () => {
+      vw.set(el.clientWidth || 1200);
+      vh.set(el.clientHeight || 700);
+      if (!live.current.travelling) snapTo(live.current.current, live.current.overview);
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Once a card has expanded, nudge the camera onto its real centre (its height depends on its text)
+  useEffect(() => {
+    if (focus === null || overview || travelling) return undefined;
+    const t = setTimeout(() => {
+      const el = viewportRef.current?.querySelector('.exp-vcard-active');
+      if (!el) return;
+      runAnimation(animate(camY, NODES[focus].cardY + el.offsetHeight / 2, { duration: 0.45, ease: [0.45, 0, 0.2, 1] }));
+    }, 420);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focus]);
+
+  // Expand the random card shortly after the page has faded in
+  useEffect(() => {
+    if (baseRef.current?.getTotalLength) dashK.current = baseRef.current.getTotalLength() / SPINE_LEN;
+    setTrail(NODE_S[current], TYPE_COLORS[NODES[current].type]);
+    const t = setTimeout(() => setFocus(f => (f === null && !live.current.overview ? live.current.current : f)), 700);
+    return () => { clearTimeout(t); anims.current.forEach(a => a.stop()); anims.current = []; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Glide the camera from card `current` to card `j`; the cursor runs along the curve in step
+  const travelTo = (j) => {
+    const { current: from, overview: ov, travelling: busy } = live.current;
+    if (busy || ov || j === from || j < 0 || j >= N) return;
+    const a = NODES[from], b = NODES[j];
+    const color = TYPE_COLORS[b.type];
+    const fs = focusScale(vw.get());
+    const dist = Math.hypot(b.cx - a.cx, b.cy - a.cy);
+    const dip = clamp(dist / 1500, 0.1, 0.3);              // zoom out a little on longer hops
+    const sA = NODE_S[from], sB = NODE_S[j];
+    const cursor = cursorRef.current;
+
+    setFocus(null);
+    setTravelling(true);
+    live.current.travelling = true;
+    setTrail(sA, color);
+    cursor.setAttribute('fill', color);
+    cursor.style.opacity = 1;
+
+    runAnimation(animate(0, 1, {
+      duration: clamp(dist / 650, 1.3, 3.2),
+      ease: [0.45, 0, 0.2, 1],
+      onUpdate: (p) => {
+        camX.set(a.cx + (b.cx - a.cx) * p);
+        camY.set(a.cy + (b.cy - a.cy) * p);
+        camS.set(fs * (1 - dip * Math.sin(Math.PI * p)));
+        const s = sA + (sB - sA) * p;
+        const [x, y] = pointAt(s);
+        cursor.setAttribute('cx', x);
+        cursor.setAttribute('cy', y);
+        setTrail(s);
+      },
+      onComplete: () => {
+        cursor.style.opacity = 0;
+        live.current.travelling = false;
+        setCurrent(j);
+        setFocus(j);
+        setTravelling(false);
+      },
+    }));
   };
 
-  // Cursor waypoints for path-follow animation
-  const cursorWaypoints = active !== null ? spineWaypointsUpTo(active) : [SPINE_PTS[0]];
-  const cursorColor     = active !== null ? TYPE_COLORS[NODES[active].type] : 'transparent';
+  const animatePose = (p, onDone) => {
+    const opts = { duration: 0.9, ease: [0.45, 0, 0.2, 1] };
+    runAnimation(
+      animate(camX, p.x, opts),
+      animate(camY, p.y, opts),
+      animate(camS, p.s, { ...opts, onComplete: onDone }),
+    );
+  };
 
-  // Zoom scale: zoomed-out shows entire canvas shrunk to fit, zoomed-in = 1
-  const scrollW    = containerRef.current?.clientWidth  || window.innerWidth;
-  const scrollH    = containerRef.current?.clientHeight || window.innerHeight * 0.75;
-  const scaleX     = scrollW  / SVG_W;
-  const scaleY     = scrollH  / TOTAL_H;
-  const zoomOutScale = Math.min(scaleX, scaleY, 0.28); // never bigger than 0.28
+  const toggleOverview = () => {
+    if (live.current.travelling) return;
+    if (!overview) {
+      setFocus(null);
+      setOverview(true);
+      live.current.overview = true;
+      animatePose(restPose(current, true));
+    } else {
+      setOverview(false);
+      live.current.overview = false;
+      animatePose(restPose(current, false), () => setFocus(current));
+    }
+  };
+
+  const onNodeClick = (i) => {
+    if (live.current.travelling) return;
+    if (isStacked()) { setFocus(f => (f === i ? null : i)); return; }
+    if (overview) {
+      // dive into the clicked card from the overview
+      setCurrent(i);
+      live.current.current = i;
+      live.current.overview = false;
+      setTrail(NODE_S[i], TYPE_COLORS[NODES[i].type]);
+      setOverview(false);
+      animatePose(restPose(i, false), () => setFocus(i));
+    } else if (i === current) {
+      setFocus(f => (f === i ? null : i));
+    } else {
+      travelTo(i);
+    }
+  };
+
+  // Keyboard: ← / → step through the timeline
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') travelTo(live.current.current + 1);
+      else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') travelTo(live.current.current - 1);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const pad = (n) => String(n).padStart(2, '0');
 
   return (
     <div className="exp-page section-page">
@@ -490,78 +551,41 @@ export default function Experience() {
           </div>
         </motion.div>
 
-        {/* Zoom-out button */}
-        {zoomed && (
-          <motion.button
-            className="exp-zoom-out-btn"
-            onClick={handleZoomOut}
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.25 }}
-          >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+        <div className="exp-controls">
+          {!overview && (
+            <>
+              <button className="exp-arrow-btn" onClick={() => travelTo(current - 1)} disabled={travelling || current === 0}>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <polyline points="10,2 4,8 10,14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                PREV
+              </button>
+              <span className="exp-arrow-index">{pad(current + 1)} / {pad(N)}</span>
+              <button className="exp-arrow-btn" onClick={() => travelTo(current + 1)} disabled={travelling || current === N - 1}>
+                NEXT
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <polyline points="6,2 12,8 6,14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+            </>
+          )}
+          <button className="exp-zoom-out-btn" onClick={toggleOverview} disabled={travelling}>
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
               <circle cx="6" cy="6" r="5" stroke="currentColor" strokeWidth="1.5"/>
               <line x1="3" y1="6" x2="9" y2="6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              {overview && <line x1="6" y1="3" x2="6" y2="9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>}
               <line x1="10.5" y1="10.5" x2="13" y2="13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
             </svg>
-            ZOOM OUT
-          </motion.button>
-        )}
+            {overview ? 'ZOOM IN' : 'OVERVIEW'}
+          </button>
+        </div>
 
-        {/* Prev / Next navigation arrows */}
-        {zoomed && (
-          <div className="exp-nav-arrows">
-            <motion.button
-              className="exp-arrow-btn"
-              onClick={goPrev}
-              disabled={active === 0}
-              whileHover={{ scale: 1.08 }}
-              whileTap={{ scale: 0.94 }}
-            >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <polyline points="10,2 4,8 10,14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              PREV
-            </motion.button>
-            <span className="exp-arrow-index">
-              {active !== null ? `${String(active + 1).padStart(2,'0')} / ${String(NODES.length).padStart(2,'0')}` : ''}
-            </span>
-            <motion.button
-              className="exp-arrow-btn"
-              onClick={goNext}
-              disabled={active === NODES.length - 1}
-              whileHover={{ scale: 1.08 }}
-              whileTap={{ scale: 0.94 }}
-            >
-              NEXT
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <polyline points="6,2 12,8 6,14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </motion.button>
-          </div>
-        )}
-
-        <div
-          className="exp-scroll"
-          ref={containerRef}
-          style={{ overflow: zoomed ? 'auto' : 'hidden' }}
-        >
+        <div className="exp-scroll" ref={viewportRef}>
           <motion.div
             className="exp-vtimeline"
-            style={{ height: TOTAL_H, width: SVG_W, transformOrigin: 'top left' }}
-            animate={{ scale: zoomed ? 1 : zoomOutScale }}
-            transition={{ duration: 0.7, ease: [0.76, 0, 0.24, 1] }}
+            style={{ height: PAGE_H, width: PAGE_W, x: tx, y: ty, scale: camS, originX: 0, originY: 0 }}
           >
-
-            {/* Main spine SVG */}
-            <svg
-              ref={svgRef}
-              className="exp-vsvg"
-              width={SVG_W}
-              height={TOTAL_H}
-              viewBox={`0 0 ${SVG_W} ${TOTAL_H}`}
-            >
+            <svg className="exp-vsvg" width={PAGE_W} height={PAGE_H} viewBox={`0 0 ${PAGE_W} ${PAGE_H}`}>
               <defs>
                 <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
                   <feGaussianBlur stdDeviation="4" result="blur" />
@@ -570,162 +594,63 @@ export default function Experience() {
                     <feMergeNode in="SourceGraphic" />
                   </feMerge>
                 </filter>
+                <pattern id="exp-grid" width="120" height="120" patternUnits="userSpaceOnUse">
+                  <path d="M120 0H0V120" fill="none" style={{ stroke: 'rgba(var(--line-rgb), 0.05)' }} strokeWidth="1" />
+                </pattern>
               </defs>
 
-              {/* Ruler marks — left-margin index notches */}
-              {rulerMarks.map((m, i) => (
-                <g key={`ruler-${i}`} opacity={svgInView ? 1 : 0} style={{ transition: `opacity 0.4s ${i * 0.05}s` }}>
-                  <line x1={m.x1} y1={m.y1} x2={m.x2} y2={m.y2} stroke="rgba(0,0,0,0.12)" strokeWidth="1" />
-                  <text x={m.labelX} y={m.labelY} fontSize="8" fontFamily="IBM Plex Mono, monospace" fill="rgba(0,0,0,0.18)" letterSpacing="0.1em">{m.label}</text>
-                </g>
-              ))}
+              {/* The A4 sheet */}
+              <rect x="0" y="0" width={PAGE_W} height={PAGE_H} rx="36" className="exp-page-sheet" />
+              <rect x="0" y="0" width={PAGE_W} height={PAGE_H} rx="36" fill="url(#exp-grid)" />
 
-              {/* Decorative parallel sub-lines — multiple offsets, colors, widths */}
-              {SUB_LINES.map((l, i) => (
-                <motion.path
-                  key={`sub-${i}`}
-                  d={subPaths[i]}
-                  stroke={l.stroke}
-                  strokeWidth={l.width}
-                  fill="none"
-                  strokeDasharray={l.dash}
-                  strokeLinecap="round"
-                  initial={{ pathLength: 0, opacity: 0 }}
-                  animate={svgInView ? { pathLength: 1, opacity: l.opacity } : {}}
-                  transition={{ duration: 2.2 + i * 0.1, ease: 'easeInOut', delay: l.delay }}
-                />
-              ))}
-
-              {/* Static spine */}
+              {/* Base route */}
               <motion.path
-                d={spinePath}
-                stroke="rgba(0,0,0,0.10)"
-                strokeWidth="1.5"
+                ref={baseRef}
+                d={SPINE_D}
+                style={{ stroke: 'rgba(var(--line-rgb), 0.18)' }}
+                strokeWidth="2"
                 fill="none"
-                strokeLinecap="square"
-                strokeLinejoin="miter"
+                strokeLinecap="round"
                 initial={{ pathLength: 0, opacity: 0 }}
-                animate={svgInView ? { pathLength: 1, opacity: 1 } : {}}
-                transition={{ duration: 2, ease: 'easeInOut' }}
+                animate={{ pathLength: 1, opacity: 1 }}
+                transition={{ duration: 2.2, ease: 'easeInOut' }}
               />
 
-              {/* Tick marks at each node entry point */}
-              {ticks.map((t, i) => (
-                <motion.line
-                  key={`tick-${i}`}
-                  x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2}
-                  stroke="rgba(0,0,0,0.18)"
-                  strokeWidth="1"
-                  initial={{ scaleY: 0, opacity: 0 }}
-                  animate={svgInView ? { scaleY: 1, opacity: 1 } : {}}
-                  transition={{ duration: 0.3, delay: 0.8 + i * 0.06 }}
-                  style={{ transformOrigin: `${t.x1}px ${(t.y1 + t.y2) / 2}px` }}
+              {/* Direction chevrons */}
+              {CHEVRONS.map((c, i) => (
+                <polygon
+                  key={`chev-${i}`}
+                  points="-9,-7 9,0 -9,7"
+                  transform={`translate(${c.x} ${c.y}) rotate(${c.deg})`}
+                  style={{ fill: 'rgba(var(--line-rgb), 0.35)' }}
                 />
               ))}
 
-              {/* Branch stubs off horizontal segments */}
-              {stubs.map((s, i) => (
-                <motion.line
-                  key={`stub-${i}`}
-                  x1={s.x1} y1={s.y1} x2={s.x2} y2={s.y2}
-                  stroke="rgba(0,0,0,0.10)"
-                  strokeWidth="1"
-                  strokeDasharray="2 3"
-                  initial={{ scaleY: 0, opacity: 0 }}
-                  animate={svgInView ? { scaleY: 1, opacity: 1 } : {}}
-                  transition={{ duration: 0.25, delay: 1.0 + i * 0.03 }}
-                  style={{ transformOrigin: `${s.x1}px ${(s.y1 + s.y2) / 2}px` }}
-                />
-              ))}
-
-              {/* Glowing cursor that travels the spine to the active node */}
-              <motion.circle
-                r={6}
-                fill={cursorColor}
-                filter="url(#glow)"
-                animate={{
-                  cx: cursorWaypoints.map(p => p[0]),
-                  cy: cursorWaypoints.map(p => p[1]),
-                  opacity: active !== null ? 1 : 0,
-                }}
-                transition={{ duration: 0.9, ease: [0.76, 0, 0.24, 1] }}
+              {/* Highlighted stretch of the route that has been travelled */}
+              <path
+                ref={trailRef}
+                d={SPINE_D}
+                fill="none"
+                strokeWidth="3.5"
+                strokeLinecap="round"
+                opacity="0.6"
+                strokeDasharray={`0 ${SPINE_LEN + 20}`}
               />
 
-              {/* Highlight trail on spine up to active node */}
-              {active !== null && (
-                <motion.path
-                  d={cursorWaypoints.map(([x, y], i) => `${i === 0 ? 'M' : 'L'} ${x} ${y}`).join(' ')}
-                  stroke={cursorColor}
-                  strokeWidth="2"
-                  fill="none"
-                  strokeLinecap="square"
-                  strokeLinejoin="miter"
-                  opacity={0.4}
-                  initial={{ pathLength: 0 }}
-                  animate={{ pathLength: 1 }}
-                  transition={{ duration: 0.9, ease: [0.76, 0, 0.24, 1] }}
-                />
-              )}
+              {/* Glowing cursor that rides the route while travelling */}
+              <circle ref={cursorRef} r="9" filter="url(#glow)" style={{ opacity: 0 }} />
             </svg>
 
-            {/* All 15 nodes */}
             {NODES.map((node, i) => (
               <TimelineNode
                 key={`node-${i}`}
                 node={node}
                 i={i}
-                isActive={active === i}
-                onClick={() => handleClick(i)}
-                containerRef={containerRef}
+                isFocus={focus === i}
+                isCurrent={!overview && current === i}
+                onClick={() => onNodeClick(i)}
               />
             ))}
-
-            {/* Nav arrows rendered inside the canvas pointing to next/prev card */}
-            {zoomed && NODES.map((node, i) => {
-              const nextNode = NODES[i + 1];
-              if (!nextNode) return null;
-              // Arrow drawn from exit of this card pointing toward entry of next card
-              const x1 = node.cardX + CARD_W / 2;
-              const y1 = node.dotY + CARD_H / 2 + 10;
-              const x2 = nextNode.cardX + CARD_W / 2;
-              const y2 = nextNode.dotY - CARD_H / 2 - 10;
-              const mx = (x1 + x2) / 2;
-              const my = (y1 + y2) / 2;
-              const color = TYPE_COLORS[node.type];
-              const isActiveArrow = active === i;
-              return (
-                <svg
-                  key={`arrow-${i}`}
-                  style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 1 }}
-                  width={SVG_W} height={TOTAL_H}
-                  viewBox={`0 0 ${SVG_W} ${TOTAL_H}`}
-                  overflow="visible"
-                >
-                  <defs>
-                    <marker id={`arrowhead-${i}`} markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto">
-                      <polygon points="0 0, 7 3.5, 0 7" fill={isActiveArrow ? color : 'rgba(0,0,0,0.15)'} />
-                    </marker>
-                  </defs>
-                  <line
-                    x1={x1} y1={y1} x2={x2} y2={y2}
-                    stroke={isActiveArrow ? color : 'rgba(0,0,0,0.10)'}
-                    strokeWidth={isActiveArrow ? 2 : 1}
-                    strokeDasharray={isActiveArrow ? '6 4' : '4 6'}
-                    markerEnd={`url(#arrowhead-${i})`}
-                    opacity={isActiveArrow ? 0.7 : 0.35}
-                  />
-                  {/* Mid-label */}
-                  <text
-                    x={mx + 8} y={my}
-                    fontSize="9" fontFamily="IBM Plex Mono, monospace"
-                    fill={isActiveArrow ? color : 'rgba(0,0,0,0.2)'}
-                    letterSpacing="0.12em"
-                  >
-                    {String(i + 2).padStart(2, '0')}
-                  </text>
-                </svg>
-              );
-            })}
           </motion.div>
         </div>
       </div>

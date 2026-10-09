@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@300;400;500&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Instrument+Serif:ital@0;1&family=Syne:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@300;400;500&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap');
 
 *, *::before, *::after {
   box-sizing: border-box;
@@ -13,28 +13,114 @@
   --blue: #4FA8FF;
   --blue-light: #A8D4FF;
   --blue-glow: rgba(79, 168, 255, 0.18);
+  --blue-rgb: 79, 168, 255;
+  --blue-deep: #2A7ABF;       /* active nav tab, deeper blue surfaces */
+  --blue-hover: #3A9FFF;
+  --accent: #4FA8FF;          /* secondary highlight (title dot, LED ring, badge) */
+  --ink: #0D0E10;             /* text; --black stays the dark-surface colour */
+  --surface: #FFFFFF;         /* cards and panels; --white stays the text-on-dark colour */
+  --line-rgb: 0, 0, 0;        /* hairlines and grid lines */
+  --chip-bg: rgba(255,255,255,0.7);
+  --chip-bg-hover: rgba(255,255,255,0.95);
+  /* file-nav tab greys, front to back */
+  --tab-0: #FFFFFF; --tab-1: #F5F6F8; --tab-2: #ECEEF1; --tab-3: #E4E7EC; --tab-4: #DDE0E7; --tab-5: #D5D9E2;
+  /* 3D headphones */
+  --hp-body: #2A7ABF; --hp-accent: #4FA8FF; --hp-dark: #14171D; --hp-metal: #C9D1DC;
   --black: #0D0E10;
   --grey-dark: #3A3D42;
   --grey-mid: #7A8190;
   --grey-light: #C8CDD8;
   --border: rgba(0,0,0,0.08);
-  --shadow-sm: 0 2px 8px rgba(0,0,0,0.06);
-  --shadow-md: 0 8px 32px rgba(0,0,0,0.10);
-  --shadow-lg: 0 24px 64px rgba(0,0,0,0.14);
+  --shadow-sm: 0 2px 0.5rem rgba(0,0,0,0.06);
+  --shadow-md: 0 0.5rem 2rem rgba(0,0,0,0.10);
+  --shadow-lg: 0 1.5rem 4rem rgba(0,0,0,0.14);
   --font-display: 'Syne', sans-serif;
   --font-mono: 'IBM Plex Mono', monospace;
   --font-body: 'DM Sans', sans-serif;
-  --folder-width: 56px;
-  --tab-h: 160px;
+  --folder-width: 3.5rem;
+  --tab-h: 10rem;
   --transition: 0.55s cubic-bezier(0.76, 0, 0.24, 1);
+
+  /* Horizontal footprint of the right-edge file nav (its offset + tabs + ears), plus a small gutter.
+     0 on phones, where the nav becomes a bottom bar. */
+  --nav-safe: 0px;
 }
 
-html { scroll-behavior: smooth; }
+@media (min-width: 769px) {
+  :root { --nav-safe: calc(2vw + 9.9rem); }
+}
+
+/* ─── Colour schemes ───────────────────────────────────────────────
+   Midnight ("c") is the default (set on <html> by the script in index.html).
+   Switch with the THEME button (bottom-left) or ?theme=current|a|b|c.
+   data-theme="current" has no block below: it is the original :root palette above. */
+
+/* A — Ice & cobalt: the current look, cooler and more saturated, with a cyan accent */
+:root[data-theme="a"] {
+  --bg: #EEF2F7; --bg-card: #F6F8FB; --surface: #FFFFFF;
+  --ink: #0B1220; --black: #0B1220;
+  --grey-dark: #3B4557; --grey-mid: #77839A; --grey-light: #C9D2E0;
+  --blue: #2F7BFF; --blue-rgb: 47, 123, 255; --blue-light: #A9C9FF; --blue-glow: rgba(47,123,255,0.18);
+  --blue-deep: #1F57C4; --blue-hover: #1F6BF0; --accent: #00C2F0;
+  --tab-0: #FFFFFF; --tab-1: #F6F8FB; --tab-2: #EEF2F7; --tab-3: #E5EBF3; --tab-4: #DCE4EF; --tab-5: #D3DCE9;
+  --hp-body: #2F7BFF; --hp-accent: #00D1FF; --hp-dark: #0E1422; --hp-metal: #CDD6E4;
+}
+
+/* B — Blue on warm paper, with an orange highlight */
+:root[data-theme="b"] {
+  --bg: #F3F1EC; --bg-card: #F8F6F1; --surface: #FFFDF9;
+  --ink: #10131A; --black: #10131A;
+  --grey-dark: #43464F; --grey-mid: #85868E; --grey-light: #D4D1C8;
+  --border: rgba(40, 30, 10, 0.09); --line-rgb: 40, 30, 10;
+  --blue: #3B82F6; --blue-rgb: 59, 130, 246; --blue-light: #B3D0FB; --blue-glow: rgba(59,130,246,0.18);
+  --blue-deep: #2563C9; --blue-hover: #2F72E0; --accent: #FF7A3D;
+  --chip-bg: rgba(255,253,249,0.8); --chip-bg-hover: #FFFDF9;
+  --tab-0: #FFFDF9; --tab-1: #F8F6F1; --tab-2: #F3F1EC; --tab-3: #EBE8E0; --tab-4: #E3DFD5; --tab-5: #DAD5C9;
+  --hp-body: #2F6FE0; --hp-accent: #FF7A3D; --hp-dark: #17140F; --hp-metal: #D9D4C8;
+}
+
+/* C — Midnight: dark navy with a violet accent */
+:root[data-theme="c"] {
+  color-scheme: dark;
+  --bg: #0A0F1E; --bg-card: #0F1730; --surface: #121B33;
+  --ink: #E8EEFF; --black: #060A15;
+  --grey-dark: #B6C1DB; --grey-mid: #7C89A8; --grey-light: #36415F;
+  --border: rgba(255,255,255,0.09); --line-rgb: 255, 255, 255;
+  --blue: #5AA9FF; --blue-rgb: 90, 169, 255; --blue-light: #2A4A7A; --blue-glow: rgba(90,169,255,0.20);
+  --blue-deep: #2F6FD0; --blue-hover: #7BBBFF; --accent: #B28CFF;
+  --shadow-sm: 0 2px 0.5rem rgba(0,0,0,0.35); --shadow-md: 0 0.5rem 2rem rgba(0,0,0,0.45); --shadow-lg: 0 1.5rem 4rem rgba(0,0,0,0.55);
+  --chip-bg: rgba(255,255,255,0.06); --chip-bg-hover: rgba(255,255,255,0.12);
+  --tab-0: #1B2745; --tab-1: #17223D; --tab-2: #131C34; --tab-3: #101830; --tab-4: #0D142A; --tab-5: #0B1124;
+  --hp-body: #3A86E0; --hp-accent: #B28CFF; --hp-dark: #0A0E1A; --hp-metal: #AAB6D0;
+}
+
+/*
+ * Fluid root size. The layout was designed on a 1920x945 viewport, where
+ * 1rem is exactly 16px. Above 1100px wide, 1rem scales with whichever
+ * viewport dimension is the limiting one, so every rem-based size keeps the
+ * designed proportions on laptops, 16:10, ultrawide and 4K screens.
+ *   100vw / 120    = 16px * (width  / 1920)
+ *   100vh / 59.0625 = 16px * (height / 945)
+ * Height is clamped (10.4px..40px = 0.65x..2.5x) so very short windows scroll
+ * instead of shrinking text below legibility; width always wins so nothing
+ * overflows horizontally. Below 1100px the stacked tablet/phone layouts use a
+ * fixed 16px root.
+ */
+html {
+  scroll-behavior: smooth;
+  font-size: 16px;
+}
+
+@media (min-width: 1101px) {
+  html {
+    font-size: min(calc(100vw / 120), clamp(10.4px, calc(100vh / 59.0625), 40px));
+  }
+}
 
 body {
   font-family: var(--font-body);
   background: var(--bg);
-  color: var(--black);
+  color: var(--ink);
   overflow-x: hidden;
   min-height: 100vh;
 }
@@ -47,50 +133,58 @@ body {
 
 ::selection {
   background: var(--blue-light);
-  color: var(--black);
+  color: var(--ink);
 }
 
-::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar { width: 0.25rem; }
 ::-webkit-scrollbar-track { background: var(--bg); }
 ::-webkit-scrollbar-thumb { background: var(--grey-light); border-radius: 2px; }
 
 .section-page {
   width: 100vw;
   min-height: 100vh;
-  padding: clamp(40px, 6vw, 80px);
+  padding: clamp(2.5rem, 6vw, 5rem);
   display: flex;
   flex-direction: column;
   justify-content: center;
 }
 
 @media (max-width: 768px) {
-  .section-page { padding: 60px 24px 120px; }
+  .section-page { padding: 3.75rem 1.5rem 7.5rem; }
+}
+
+/* Tablet widths use the stacked layouts but still show the right-edge nav: keep content clear of it.
+   (Laptop/desktop layouts already end before the nav at every aspect ratio.) */
+@media (min-width: 769px) and (max-width: 1100px) {
+  #root .section-page,
+  #root .home-left,
+  #root .home-links { padding-right: var(--nav-safe); }
 }
 
 .section-label {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: max(9px, 0.6875rem);
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--blue);
-  margin-bottom: 16px;
+  margin-bottom: 1rem;
 }
 
 .section-title {
   font-family: var(--font-display);
-  font-size: clamp(36px, 5vw, 64px);
+  font-size: max(9px, clamp(2.25rem, 5vw, 4rem));
   font-weight: 800;
-  color: var(--black);
+  color: var(--ink);
   line-height: 1.05;
-  margin-bottom: 32px;
+  margin-bottom: 2rem;
 }
 
 .card {
-  background: var(--white);
-  border-radius: 16px;
+  background: var(--surface);
+  border-radius: 1rem;
   border: 1px solid var(--border);
   box-shadow: var(--shadow-sm);
-  padding: 28px;
+  padding: 1.75rem;
   transition: box-shadow 0.3s ease, transform 0.3s ease;
 }
 
@@ -102,24 +196,24 @@ body {
 .tag {
   display: inline-flex;
   align-items: center;
-  padding: 4px 12px;
-  border-radius: 100px;
+  padding: 0.25rem 0.75rem;
+  border-radius: 6.25rem;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: max(9px, 0.6875rem);
   letter-spacing: 0.05em;
   background: var(--blue-glow);
   color: var(--blue);
-  border: 1px solid rgba(79, 168, 255, 0.25);
+  border: 1px solid rgba(var(--blue-rgb), 0.25);
 }
 
 .btn {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  padding: 14px 28px;
-  border-radius: 100px;
+  gap: 0.625rem;
+  padding: 0.875rem 1.75rem;
+  border-radius: 6.25rem;
   font-family: var(--font-display);
-  font-size: 14px;
+  font-size: max(9px, 0.875rem);
   font-weight: 600;
   letter-spacing: 0.02em;
   cursor: pointer;
@@ -135,12 +229,12 @@ body {
 .btn-primary:hover {
   background: var(--blue);
   transform: translateY(-1px);
-  box-shadow: 0 8px 24px rgba(79, 168, 255, 0.4);
+  box-shadow: 0 0.5rem 1.5rem rgba(var(--blue-rgb), 0.4);
 }
 
 .btn-outline {
   background: transparent;
-  color: var(--black);
+  color: var(--ink);
   border: 1.5px solid var(--grey-light);
 }
 

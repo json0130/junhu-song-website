@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import useRemScale from '../hooks/useRemScale';
 import { motion, AnimatePresence } from 'framer-motion';
 import './Projects.css';
 
@@ -68,6 +69,7 @@ const PROJECTS = [
 export default function Projects() {
   const [activeIdx, setActiveIdx] = useState(0);
   const [dir, setDir] = useState(1);
+  const remScale = useRemScale();
 
   const go = (next) => {
     const n = (next + PROJECTS.length) % PROJECTS.length;
@@ -154,7 +156,7 @@ export default function Projects() {
               {PROJECTS.map((p, i) => {
                 const angle = (i / PROJECTS.length) * 360 - (activeIdx / PROJECTS.length) * 360;
                 const rad = (angle * Math.PI) / 180;
-                const r = 360;
+                const r = 360 * remScale;
                 const x = Math.sin(rad) * r;
                 const y = -Math.cos(rad) * r;
                 const spokeAngle = (Math.atan2(x, -y) * 180) / Math.PI;
@@ -163,7 +165,7 @@ export default function Projects() {
                   <motion.div
                     key={`spoke-${p.id}`}
                     className="reel-spoke"
-                    animate={{ rotate: spokeAngle, scaleY: Math.hypot(x, y) / 360 }}
+                    animate={{ rotate: spokeAngle, scaleY: Math.hypot(x, y) / r }}
                     transition={{ duration: 0.7, ease: [0.76, 0, 0.24, 1] }}
                     style={{ height: r }}
                   />
@@ -174,7 +176,7 @@ export default function Projects() {
               {PROJECTS.map((p, i) => {
                 const angle = (i / PROJECTS.length) * 360 - (activeIdx / PROJECTS.length) * 360;
                 const rad = (angle * Math.PI) / 180;
-                const r = 360;
+                const r = 360 * remScale;
                 const x = Math.sin(rad) * r;
                 const y = -Math.cos(rad) * r;
                 const isActive = i === activeIdx;

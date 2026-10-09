@@ -4,6 +4,17 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📁</text></svg>" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      /* Apply the colour scheme before first paint (see ThemeSwitcher). Midnight ("c") is the default;
+         "current" is the original light palette. */
+      var theme = "c";
+      try {
+        var t = new URLSearchParams(location.search).get("theme") || localStorage.getItem("theme");
+        if (t === "default") t = "current";
+        if (t === "current" || t === "a" || t === "b" || t === "c") theme = t;
+      } catch (e) {}
+      document.documentElement.setAttribute("data-theme", theme);
+    </script>
     <title>Junhu Song – Portfolio</title>
     <meta name="description" content="Junhu Song – Software Engineer, ML & AI Researcher, University of Auckland" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />

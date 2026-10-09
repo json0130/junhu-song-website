@@ -99,18 +99,18 @@ export function AudioProvider({ children }) {
     src.connect(analyser);
     sourceRef.current = src;
 
+    // When a song finishes: repeat it if "repeat" is on, otherwise play the next one and wrap
+    // from the last song back to the first, so the playlist never stops on its own.
     audio.onended = () => {
+      if (isLoopingRef.current || TRACKS.length < 2) {
+        audio.currentTime = 0;
+        audio.play();
+        return;
+      }
       stopProgressTick();
       setProgress(0);
-      if (isLoopingRef.current) {
-        const idx = TRACKS.findIndex(t => t.id === activeIdRef.current);
-        playTrack(TRACKS[idx >= TRACKS.length - 1 ? 0 : idx + 1]);
-      } else {
-        isPlayingRef.current = false;
-        activeIdRef.current  = null;
-        setIsPlaying(false);
-        setActiveId(null);
-      }
+      const idx = TRACKS.findIndex(t => t.id === activeIdRef.current);
+      playTrack(TRACKS[(idx + 1) % TRACKS.length]);
     };
 
     if (ctx.state === 'suspended') ctx.resume();

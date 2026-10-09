@@ -4,6 +4,8 @@ import { AudioProvider } from './context/AudioContext';
 import './index.css';
 
 import FolderNav from './components/FolderNav';
+import ThemeSwitcher from './components/ThemeSwitcher';
+import MiniPlayer from './components/MiniPlayer';
 import Home from './components/Home';
 import About from './components/About';
 import Achievements from './components/Achievements';
@@ -41,12 +43,12 @@ function FolderSweep({ isAnimating }) {
         >
           <div style={{
             position: 'absolute',
-            right: 80,
+            right: '5rem',
             top: '50%',
             transform: 'translateY(-50%)',
             display: 'flex',
             flexDirection: 'column',
-            gap: 10,
+            gap: '0.625rem',
             alignItems: 'flex-end',
           }}>
             {['FILE_00//', 'FILE_01//', 'FILE_02//', 'FILE_03//', 'FILE_04//', 'FILE_05//'].map((f, i) => (
@@ -57,9 +59,9 @@ function FolderSweep({ isAnimating }) {
                 transition={{ delay: i * 0.045, duration: 0.3 }}
                 style={{
                   fontFamily: "'IBM Plex Mono', monospace",
-                  fontSize: 10,
+                  fontSize: '0.625rem',
                   letterSpacing: '0.2em',
-                  color: 'rgba(79,168,255,0.8)',
+                  color: 'rgba(var(--blue-rgb), 0.8)',
                   textTransform: 'uppercase',
                 }}
               >
@@ -73,8 +75,8 @@ function FolderSweep({ isAnimating }) {
               top: 0,
               bottom: 0,
               width: 2,
-              background: 'linear-gradient(to bottom, transparent, #4FA8FF, transparent)',
-              boxShadow: '0 0 24px #4FA8FF',
+              background: 'linear-gradient(to bottom, transparent, var(--blue), transparent)',
+              boxShadow: '0 0 1.5rem var(--blue)',
             }}
             initial={{ left: '0%' }}
             animate={{ left: '100%' }}
@@ -118,6 +120,8 @@ export default function App() {
       </AnimatePresence>
 
       <FolderNav activePage={activePage} onNavigate={navigate} />
+      <ThemeSwitcher />
+      <MiniPlayer activePage={activePage} onNavigate={navigate} />
       <FolderSweep isAnimating={isSweeping} />
     </div>
     </AudioProvider>
